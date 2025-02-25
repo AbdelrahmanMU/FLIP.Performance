@@ -1,0 +1,6 @@
+@FLIP.Performance_HostAddress = http://localhost:5115
+
+GET {{FLIP.Performance_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

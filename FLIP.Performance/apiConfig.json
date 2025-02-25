@@ -1,0 +1,23 @@
+﻿[
+  {
+    "url": "https://jsonplaceholder.typicode.com/posts/",
+    "isBearerAuth": false,
+    "bearerToken": "",
+    "params": [
+      "2025-02-1",
+      "2025-02-19"
+    ]
+  },
+  {
+    "url": "https://jsonplaceholder.typicode.com/posts/",
+    "isBearerAuth": false,
+    "bearerToken": "",
+    "params": []
+  },
+  {
+    "url": "https://jsonplaceholder.typicode.com/posts/",
+    "isBearerAuth": false,
+    "bearerToken": "",
+    "params": []
+  }
+]
