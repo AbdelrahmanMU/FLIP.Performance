@@ -32,10 +32,15 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
             var connection = await factory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
 
+
             await channel.QueueDeclareAsync(queue: _settings.QueueName,
                                  durable: true,
                                  exclusive: false,
-                                 autoDelete: false);
+                                 autoDelete: false,
+                                 arguments: new Dictionary<string, object?>
+                                 {
+                                     { "x-queue-mode", "default" } // Avoid "lazy"
+                                 });
 
             await channel.QueueDeclareAsync(queue: _settings.DeadLetterQueue,
                                  durable: true,
@@ -43,7 +48,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
                                  autoDelete: false);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
-           
+
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 try
@@ -55,7 +60,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
                     if (isParsed)
                     {
                         // At least one success
-                        bool success = await _apiCaller.ExecuteParallelApiCallsAsync(id);
+                        var (success, apiLogs, freelancerDataResponse) = await _apiCaller.ExecuteParallelApiCallsAsync(id);
                         if (success)
                         {
                             _logger.Information("[Consumer] Message processed successfully", message);
