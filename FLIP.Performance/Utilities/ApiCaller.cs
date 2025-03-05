@@ -13,9 +13,9 @@ public class ApiCaller
     private readonly int _retryCount = 5;
     private readonly int _maxDegreeOfParallelism = 16;
     private readonly Serilog.ILogger _logger = Log.Logger;
-    private List<ApiLog> _logs = [];
-    private List<FreelancerData> _freelancersData = [];
-
+    private readonly List<ApiLog> _logs = [];
+    private readonly List<FreelancerData> _freelancersData = [];
+   
     public async Task<bool> CallExternalApiAsync(ApiRequest api, int id)
     {
         var policy = Policy

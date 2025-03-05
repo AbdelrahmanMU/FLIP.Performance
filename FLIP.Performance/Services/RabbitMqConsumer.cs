@@ -34,7 +34,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
 
 
             await channel.QueueDeclareAsync(queue: _settings.QueueName,
-                                 durable: true,
+                                 durable: false,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: new Dictionary<string, object?>
@@ -43,9 +43,13 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
                                  });
 
             await channel.QueueDeclareAsync(queue: _settings.DeadLetterQueue,
-                                 durable: true,
+                                 durable: false,
                                  exclusive: false,
-                                 autoDelete: false);
+                                 autoDelete: false,
+                                 arguments: new Dictionary<string, object?>
+                                 {
+                                     { "x-queue-mode", "default" } // Avoid "lazy"
+                                 });
 
             var consumer = new AsyncEventingBasicConsumer(channel);
 
@@ -72,6 +76,9 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
                             }
                             catch (Exception ex)
                             {
+                                // Requeue the message if processing fails
+                                await channel.BasicNackAsync(ea.DeliveryTag, false, true);
+
                                 _logger.Error($"[Consumer] Error in Start method: {ex.Message}", ex.Message);
                             }
                         }
@@ -95,7 +102,6 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
             };
 
             await channel.BasicConsumeAsync(queue: _settings.QueueName, autoAck: false, consumer: consumer);
-
             _logger.Information("[Consumer] Waiting for messages...");
 
             // Keep the application alive
