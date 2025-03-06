@@ -14,6 +14,7 @@ public class ApiCaller
     private readonly int _maxDegreeOfParallelism = 16;
     private readonly Serilog.ILogger _logger = Log.Logger;
     private readonly List<ApiLog> _logs = [];
+    private readonly List<ErrorLogs> _errorLogs = [];
     private readonly List<FreelancerData> _freelancersData = [];
    
     public async Task<bool> CallExternalApiAsync(ApiRequest api, int id)
@@ -40,7 +41,7 @@ public class ApiCaller
             {
                 RequestUri = api.Url,
                 StatusCode = (int)response.StatusCode,
-                LoggedAt = DateTime.Now,
+                LoggedAt = DateTime.UtcNow,
                 Message = response.ReasonPhrase,
                 ResponseTimeMs = responseTimeMs
             };
@@ -51,7 +52,7 @@ public class ApiCaller
                 {
                     PlatformName = api.PlatformName,
                     NationalId = id.ToString(),
-                    CreatedDate = DateTime.Now,
+                    IntegeratedAt = DateTime.UtcNow,
                     JsonConvert = await response.Content.ReadAsStringAsync()
                 };
             }
@@ -67,13 +68,21 @@ public class ApiCaller
             _logger.Error($"[API Caller] API call failed after {_retryCount} retries", ex.Message);
             log.Message = ex.Message;
 
+            var errorLog = new ErrorLogs
+            {
+                RequestUrl = api.Url,
+                RequestPayload = id.ToString(),
+                ErrorMessage = ex.Message,
+                LoggedAt = DateTime.UtcNow
+            };
+
             _logs.Add(log);
 
             return false;
         }
     }
 
-    public async Task<(bool, List<ApiLog>, List<FreelancerData>)> ExecuteParallelApiCallsAsync(int id)
+    public async Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)> ExecuteParallelApiCallsAsync(int id)
     {
         var tasks = new List<Task<bool>>();
 
@@ -87,7 +96,7 @@ public class ApiCaller
             {
                 api.Params.Insert(0, id.ToString());
 
-                var apiWithParams = APIHelper.PrepareParams(api);
+                api.PrepareParams();
 
                 await semaphore.WaitAsync(); // Control concurrency level
 
@@ -95,7 +104,7 @@ public class ApiCaller
                 {
                     try
                     {
-                        return await CallExternalApiAsync(apiWithParams, id);
+                        return await CallExternalApiAsync(api, id);
                     }
                     finally
                     {
@@ -116,6 +125,6 @@ public class ApiCaller
         int successCount = tasks.Count(t => t.Result);
         _logger.Information($"Completed {tasks.Count} API calls, {successCount} were successful.");
 
-        return (successCount >= 1, _logs, _freelancersData);
+        return (successCount >= 1, _logs, _freelancersData, _errorLogs);
     }
 }

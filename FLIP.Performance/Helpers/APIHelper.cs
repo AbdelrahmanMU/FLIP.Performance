@@ -22,12 +22,4 @@ public static class APIHelper
         return requests ?? [];
     }
 
-    public static ApiRequest PrepareParams(ApiRequest api)
-    {
-        var formatedParams = string.Join("/", api.Params);
-
-        api.Url = api.Url + formatedParams;
-
-        return api;
-    }
 }

@@ -1,4 +1,5 @@
 using FLIP.Performance.Config;
+using FLIP.Performance.Consumers;
 using FLIP.Performance.Services;
 using Serilog;
 
@@ -15,6 +16,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
+
+builder.Services.AddScoped<IDapperQueries, DapperQueries>();
 
 // Register RabbitMqConsumer
 builder.Services.AddSingleton<RabbitMqConsumer>();

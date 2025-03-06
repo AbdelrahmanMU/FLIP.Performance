@@ -1,4 +1,5 @@
 ﻿using FLIP.Performance.Config;
+using FLIP.Performance.Services;
 using FLIP.Performance.Utilities;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -6,13 +7,15 @@ using RabbitMQ.Client.Events;
 using Serilog;
 using System.Text;
 
-namespace FLIP.Performance.Services;
+namespace FLIP.Performance.Consumers;
 
-public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
+public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
+    IDapperQueries dapperQueries)
 {
     private readonly RabbitMqSettings _settings = options.Value;
     private readonly ApiCaller _apiCaller = new();
     private readonly Serilog.ILogger _logger = Log.Logger;
+    private readonly IDapperQueries _dapperQueries = dapperQueries;
 
     public async Task Start()
     {
@@ -31,7 +34,6 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
 
             var connection = await factory.CreateConnectionAsync();
             var channel = await connection.CreateChannelAsync();
-
 
             await channel.QueueDeclareAsync(queue: _settings.QueueName,
                                  durable: false,
@@ -64,9 +66,13 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
                     if (isParsed)
                     {
                         // At least one success
-                        var (success, apiLogs, freelancerDataResponse) = await _apiCaller.ExecuteParallelApiCallsAsync(id);
+                        var (success, apiLogs, freelancerDataResponse, errorLogs) = await _apiCaller.ExecuteParallelApiCallsAsync(id);
                         if (success)
                         {
+                            await _dapperQueries.InsertLogs(apiLogs);
+                            await _dapperQueries.InsertFreeelancers(freelancerDataResponse);
+                            await _dapperQueries.InsertErrorLogs(errorLogs);
+
                             _logger.Information("[Consumer] Message processed successfully", message);
 
                             try
@@ -77,7 +83,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options)
                             catch (Exception ex)
                             {
                                 // Requeue the message if processing fails
-                                await channel.BasicNackAsync(ea.DeliveryTag, false, true);
+                                await channel.BasicNackAsync(ea.DeliveryTag, false, false);
 
                                 _logger.Error($"[Consumer] Error in Start method: {ex.Message}", ex.Message);
                             }
