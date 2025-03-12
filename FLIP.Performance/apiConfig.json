@@ -1,26 +1,26 @@
 ﻿[
-  {
-    "platformName": "Bahr",
-    "url": "https://jsonplaceholder.typicode.com/posts/",
-    "isBearerAuth": true,
-    "bearerToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3MjQyNDMxODQsImV4cCI6MTc1NTc3OTE4NCwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjpbIk1hbmFnZXIiLCJQcm9qZWN0IEFkbWluaXN0cmF0b3IiXX0.dc9_2qr_adTKox0yE6y_KJZRPWot-MiBkQJoIzlMn4M",
-    "params": [
-      "2025-02-1",
-      "2025-02-19"
-    ]
-  },
-  {
-    "platformName": "Uber",
-    "url": "https://jsonplaceholder.typicode.com/posts/",
-    "isBearerAuth": false,
-    "bearerToken": "",
-    "params": []
-  },
-  {
-    "platformName": "Tawseel",
-    "url": "https://jsonplaceholder.typicode.com/posts/",
-    "isBearerAuth": false,
-    "bearerToken": "",
-    "params": []
-  }
+    {
+        "platformName": "BAHR",
+        "url": "https://api.bahr.sa/api/v1/users/",
+        "isBearerAuth": true,
+        "bearerToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiYWhyLnNhIiwiaWF0IjoxNzQxMzQ5MTc0LjM5NjM4NSwiZXhwIjoxNzU3MjQ2Nzc0LjM5NDcwNSwibmJmIjoxNzQxMzQ5MTc0LjM5NjM4NSwic3ViIjoiYmFoci10ZWFtIiwiYXVkIjoidXNlci1pbmZvIn0.322i9GoUASF_EOM0Q8sb3Jd3LaOqiqUpVwG2yodzmpE",
+        "params": [
+            "2023-01-10",
+            "2024-12-12"
+        ]
+    },
+    {
+        "platformName": "Uber",
+        "url": "https://jsonplaceholder.typicode.com/posts/",
+        "isBearerAuth": false,
+        "bearerToken": "",
+        "params": []
+    },
+    {
+        "platformName": "Tawseel",
+        "url": "https://jsonplaceholder.typicode.com/posts/",
+        "isBearerAuth": false,
+        "bearerToken": "",
+        "params": []
+    }
 ]

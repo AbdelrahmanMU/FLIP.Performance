@@ -5,17 +5,32 @@ using System.Data;
 
 namespace FLIP.Performance.Services;
 
-public class DapperQueries : IDapperQueries
+public class DapperQueries(IConfiguration configuration) : IDapperQueries
 {
-    private readonly string connectionString = "Server=10.10.208.93; Database={DB_Name}; User ID=sa; Password=sa@123456; TrustServerCertificate=True; Connection Timeout=30;";
+    private readonly string connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
 
     public async Task<int> InsertFreeelancers(List<FreelancerData> freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
-        
+
         string sql = @"
-                INSERT INTO FreelancerData (PlatformName, TransactionID, NationalId, IntegeratedAt, JsonConvert) 
-                VALUES (@PlatformName, @TransactionID, @NationalId, @IntegeratedAt, @JsonConvert);";
+                INSERT INTO StagingTableProject (TransactionID, PlatformName, IngestedAt, NationalId, JsonContent) 
+                VALUES (@TransactionID, @PlatformName, @IngestedAt, @NationalId, @JsonContent);";
+
+        var affectedRows = 0;
+
+        affectedRows = await db.ExecuteAsync(sql, freelancersData);
+
+        return affectedRows;
+    }
+
+    public async Task<int> InsertFreeelancersRide(List<FreelancerData> freelancersData)
+    {
+        using IDbConnection db = new SqlConnection(connectionString);
+
+        string sql = @"
+                INSERT INTO StagingTableRide (TransactionID, PlatformName, IngestedAt, NationalId, JsonContent) 
+                VALUES (@TransactionID, @PlatformName, @IngestedAt, @NationalId, @JsonContent);";
 
         var affectedRows = await db.ExecuteAsync(sql, freelancersData);
 
@@ -27,8 +42,8 @@ public class DapperQueries : IDapperQueries
         using IDbConnection db = new SqlConnection(connectionString);
 
         string sql = @"
-                INSERT INTO ApiLog (RequestUri, StatusCode, Message, LoggedAt) 
-                VALUES (@RequestUri, @StatusCode, @Message, @LoggedAt);";
+                INSERT INTO ApiLog (RequestUri, StatusCode, Message, LoggedAt, ResponseTimeMs) 
+                VALUES (@RequestUri, @StatusCode, @Message, @LoggedAt, @ResponseTimeMs);";
 
         var affectedRows = await db.ExecuteAsync(sql, apiLogs);
 

@@ -17,15 +17,16 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
 
-builder.Services.AddScoped<IDapperQueries, DapperQueries>();
+builder.Services.AddSingleton<IDapperQueries, DapperQueries>();
 
 // Register RabbitMqConsumer
 builder.Services.AddSingleton<RabbitMqConsumer>();
+builder.Services.AddMemoryCache();
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
-    .WriteTo.File("../../../logs/API-log-.txt",
+    .WriteTo.File("logs/API-log-.txt",
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 10,
         fileSizeLimitBytes: 10_000_000,
@@ -34,6 +35,22 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(); // Continue processing
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Unhandled exception occurred!");
+
+        // Respond with a generic error message
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsync("An unexpected error occurred.");
+    }
+});
 
 // Start the RabbitMQ Consumer in the background
 var consumer = app.Services.GetRequiredService<RabbitMqConsumer>();

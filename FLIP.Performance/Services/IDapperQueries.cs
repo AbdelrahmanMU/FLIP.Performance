@@ -5,6 +5,7 @@ namespace FLIP.Performance.Services;
 public interface IDapperQueries
 {
     Task<int> InsertFreeelancers(List<FreelancerData> freelancersData); 
+    Task<int> InsertFreeelancersRide(List<FreelancerData> freelancersData); 
     Task<int> InsertLogs(List<ApiLog> apiLogs); 
     Task<int> InsertErrorLogs(List<ErrorLogs> apiLogs); 
 }

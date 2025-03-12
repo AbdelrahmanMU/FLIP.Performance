@@ -2,6 +2,7 @@
 
 public class ErrorLogs
 {
+    public Guid Id { get; set; }
     public string? Component { get; set; }
 
     public string? Operation { get; set; }
@@ -18,5 +19,5 @@ public class ErrorLogs
 
     public string? StackTrace { get; set; }
 
-    public DateTime LoggedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset LoggedAt { get; set; } = DateTime.Now;
 }

@@ -4,6 +4,7 @@ using FLIP.Performance.Models;
 using Polly;
 using Serilog;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 
 namespace FLIP.Performance.Utilities;
 
@@ -16,8 +17,8 @@ public class ApiCaller
     private readonly List<ApiLog> _logs = [];
     private readonly List<ErrorLogs> _errorLogs = [];
     private readonly List<FreelancerData> _freelancersData = [];
-   
-    public async Task<bool> CallExternalApiAsync(ApiRequest api, int id)
+
+    public async Task<bool> CallExternalApiAsync(ApiRequest api, int id/*, FreelancerData  freelancer*/)
     {
         var policy = Policy
             .Handle<HttpRequestException>()
@@ -31,7 +32,12 @@ public class ApiCaller
 
         try
         {
-            response = await policy.ExecuteAsync(() =>
+            if (api.IsBearerAuth)
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", api.BearerToken);
+            }
+
+            response = await policy.ExecuteAsync(() =>      
                 _httpClient.GetAsync($"{api.Url}"));
 
             stopwatch.Stop();
@@ -41,24 +47,33 @@ public class ApiCaller
             {
                 RequestUri = api.Url,
                 StatusCode = (int)response.StatusCode,
-                LoggedAt = DateTime.UtcNow,
+                LoggedAt = DateTime.Now,
                 Message = response.ReasonPhrase,
                 ResponseTimeMs = responseTimeMs
             };
-
+                
             if (response.IsSuccessStatusCode)
             {
                 freelancerData = new FreelancerData
                 {
+                    TransactionID = Guid.NewGuid(),
                     PlatformName = api.PlatformName,
+                    IngestedAt = DateTime.Now.AddDays(-1),
                     NationalId = id.ToString(),
-                    IntegeratedAt = DateTime.UtcNow,
-                    JsonConvert = await response.Content.ReadAsStringAsync()
+                    JsonContent = await response.Content.ReadAsStringAsync()
+                    
+                    
+                    //TransactionID = freelancer.TransactionID,
+                    //PlatformName = freelancer.PlatformName,
+                    //IngestedAt = DateTime.Now.AddDays(-1),
+                    //NationalId = freelancer.NationalId,
+                    //JsonContent = freelancer.JsonContent
                 };
+
+                _freelancersData.Add(freelancerData);
             }
 
             _logs.Add(log);
-            _freelancersData.Add(freelancerData);
 
             return response.IsSuccessStatusCode;
         }
@@ -87,10 +102,12 @@ public class ApiCaller
         var tasks = new List<Task<bool>>();
 
         var apis = APIHelper.APIRequests();
+        //var dummyData = APIHelper.DumyData();
 
         using (var semaphore = new SemaphoreSlim(_maxDegreeOfParallelism))
         {
             var totalStopwatch = Stopwatch.StartNew(); // Start benchmark
+            int i = 0;
 
             foreach (var api in apis)
             {
@@ -111,6 +128,8 @@ public class ApiCaller
                         semaphore.Release();
                     }
                 }));
+
+                i++;
             }
 
             totalStopwatch.Stop();

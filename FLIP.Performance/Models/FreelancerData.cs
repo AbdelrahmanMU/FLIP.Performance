@@ -2,10 +2,10 @@
 
 public class FreelancerData
 {
-    public string PlatformName { get; set; } = default!;
     public Guid TransactionID { get; set; }
+    public DateTimeOffset IngestedAt { get; set; }
+    public string PlatformName { get; set; } = default!;
     public string NationalId { get; set; } = default!;
-    public DateTime IntegeratedAt { get; set; }
 
-    public string? JsonConvert { get; set; }
+    public string? JsonContent { get; set; }
 }

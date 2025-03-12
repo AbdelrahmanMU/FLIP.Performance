@@ -1,7 +1,9 @@
 ﻿using FLIP.Performance.Config;
 using FLIP.Performance.Services;
 using FLIP.Performance.Utilities;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.Client;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Serilog;
@@ -10,13 +12,14 @@ using System.Text;
 namespace FLIP.Performance.Consumers;
 
 public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
-    IDapperQueries dapperQueries)
+    IDapperQueries dapperQueries,
+    IMemoryCache memoryCache)
 {
     private readonly RabbitMqSettings _settings = options.Value;
     private readonly ApiCaller _apiCaller = new();
     private readonly Serilog.ILogger _logger = Log.Logger;
     private readonly IDapperQueries _dapperQueries = dapperQueries;
-
+    private readonly IMemoryCache _memoryCache = memoryCache;
     public async Task Start()
     {
         try
@@ -36,22 +39,14 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
             var channel = await connection.CreateChannelAsync();
 
             await channel.QueueDeclareAsync(queue: _settings.QueueName,
-                                 durable: false,
+                                 durable: true,
                                  exclusive: false,
-                                 autoDelete: false,
-                                 arguments: new Dictionary<string, object?>
-                                 {
-                                     { "x-queue-mode", "default" } // Avoid "lazy"
-                                 });
+                                 autoDelete: false);
 
             await channel.QueueDeclareAsync(queue: _settings.DeadLetterQueue,
-                                 durable: false,
+                                 durable: true,
                                  exclusive: false,
-                                 autoDelete: false,
-                                 arguments: new Dictionary<string, object?>
-                                 {
-                                     { "x-queue-mode", "default" } // Avoid "lazy"
-                                 });
+                                 autoDelete: false);
 
             var consumer = new AsyncEventingBasicConsumer(channel);
 
@@ -65,12 +60,22 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
 
                     if (isParsed)
                     {
+                        //if (_memoryCache.TryGetValue(id, out _))
+                        //{
+                        //    // ID is already cached
+                        //    return;
+                        //}
+
+                        //// ID is not cached, so we add it
+                        //_memoryCache.Set(id, true); // Cache for 10 minutes
+
                         // At least one success
                         var (success, apiLogs, freelancerDataResponse, errorLogs) = await _apiCaller.ExecuteParallelApiCallsAsync(id);
                         if (success)
                         {
                             await _dapperQueries.InsertLogs(apiLogs);
                             await _dapperQueries.InsertFreeelancers(freelancerDataResponse);
+                            await _dapperQueries.InsertFreeelancersRide(freelancerDataResponse);
                             await _dapperQueries.InsertErrorLogs(errorLogs);
 
                             _logger.Information("[Consumer] Message processed successfully", message);
@@ -114,7 +119,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
             var tcs = new TaskCompletionSource();
             await tcs.Task;
         }
-        catch (Exception ex)
+            catch (Exception ex)
         {
             _logger.Error($"[Consumer] Error in Start method: {ex.Message}", ex.Message);
         }
@@ -135,4 +140,16 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
             _logger.Error($"[Consumer] Failed to send message to DLQ: {ex.Message}", ex.Message);
         }
     }
+
+    //public bool IsIdCached(string id)
+    //{
+    //    if (_memoryCache.TryGetValue(id, out _))
+    //    {
+    //        return true; // ID exists in cache
+    //    }
+
+    //    _memoryCache.Set(id, true);S
+
+    //    return false; // First time seeing this ID
+    //}
 }
