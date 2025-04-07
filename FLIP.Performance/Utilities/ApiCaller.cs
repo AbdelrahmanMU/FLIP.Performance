@@ -8,22 +8,24 @@ using System.Net.Http.Headers;
 
 namespace FLIP.Performance.Utilities;
 
-public class ApiCaller
+public class ApiCaller(IConfiguration configuration)
 {
     private readonly HttpClient _httpClient = new();
-    private readonly int _retryCount = 5;
     private readonly int _maxDegreeOfParallelism = 16;
     private readonly Serilog.ILogger _logger = Log.Logger;
     private readonly List<ApiLog> _logs = [];
     private readonly List<ErrorLogs> _errorLogs = [];
     private readonly List<FreelancerData> _freelancersData = [];
+    private readonly IConfiguration _configuration = configuration;
 
     public async Task<bool> CallExternalApiAsync(ApiRequest api, int id/*, FreelancerData  freelancer*/)
     {
+        var retryCount = int.Parse(_configuration["retryCount"] ?? "");
+
         var policy = Policy
             .Handle<HttpRequestException>()
             .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode && r.StatusCode != System.Net.HttpStatusCode.NotFound)
-            .WaitAndRetryAsync(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            .WaitAndRetryAsync(retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         HttpResponseMessage response = new();
         var log = new ApiLog();
@@ -80,7 +82,7 @@ public class ApiCaller
         catch (Exception ex)
         {
             stopwatch.Stop();
-            _logger.Error($"[API Caller] API call failed after {_retryCount} retries", ex.Message);
+            _logger.Error($"[API Caller] API call failed after {retryCount} retries", ex.Message);
             log.Message = ex.Message;
 
             var errorLog = new ErrorLogs

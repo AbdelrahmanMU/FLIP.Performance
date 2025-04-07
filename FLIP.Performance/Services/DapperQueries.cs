@@ -9,7 +9,9 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 {
     private readonly string connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
 
-    public async Task<int> InsertFreeelancers(List<FreelancerData> freelancersData)
+    #region Insert
+
+    public async Task<int> InsertFreelancers(List<FreelancerData> freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -24,7 +26,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> InsertFreeelancersRide(List<FreelancerData> freelancersData)
+    public async Task<int> InsertFreelancersRide(List<FreelancerData> freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -62,4 +64,63 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
         return affectedRows;
     }
+
+    #endregion
+
+    #region Update
+
+    public async Task<int> UpdateFreelancers(List<FreelancerData> freelancersData)
+    {
+        using IDbConnection db = new SqlConnection(connectionString);
+
+        string sql = @"
+        UPDATE StagingTableProject
+        SET 
+            PlatformName = @PlatformName,
+            IngestedAt = @IngestedAt,
+            JsonContent = @JsonContent
+        WHERE NationalId = @NationalId;";
+
+        var affectedRows = await db.ExecuteAsync(sql, freelancersData);
+
+        return affectedRows;
+    }
+
+    public async Task<int> UpdateFreelancersRide(List<FreelancerData> freelancersData)
+    {
+        using IDbConnection db = new SqlConnection(connectionString);
+
+        string sql = @"
+        UPDATE StagingTableRide
+        SET 
+            PlatformName = @PlatformName,
+            IngestedAt = @IngestedAt,
+            JsonContent = @JsonContent
+        WHERE NationalId = @NationalId;";
+
+        var affectedRows = await db.ExecuteAsync(sql, freelancersData);
+
+        return affectedRows;
+    }
+
+    #endregion
+
+    #region Get
+
+    public async Task<List<string>> GetFreelancersIds()
+    {
+        using IDbConnection db = new SqlConnection(connectionString);
+
+        string selectSql = @"
+        SELECT NationalId 
+        FROM StagingTableProject";
+
+        var result = await db.QueryAsync<string>(selectSql);
+
+        return result.ToList();
+    }
+
+
+    #endregion
+
 }
