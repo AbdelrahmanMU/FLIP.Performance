@@ -1,9 +1,11 @@
 ﻿using Dapper;
-using FLIP.API.Models;
+using FLIP.Application.Interfaces;
+using FLIP.Application.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
-namespace FLIP.API.Services;
+namespace FLIP.Infrastructure.Dapperervice;
 
 public class DapperQueries(IConfiguration configuration) : IDapperQueries
 {

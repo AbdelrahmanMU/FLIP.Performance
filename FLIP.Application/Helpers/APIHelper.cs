@@ -1,9 +1,9 @@
-﻿using FLIP.API.Config;
-using FLIP.API.Models;
+﻿using FLIP.Application.Config;
+using FLIP.Application.Models;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace FLIP.API.Helpers;
+namespace FLIP.Application.Helpers;
 
 public static class APIHelper
 {

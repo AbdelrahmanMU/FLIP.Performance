@@ -1,6 +1,6 @@
-﻿using FLIP.API.Config;
+﻿using FLIP.Application.Config;
 
-namespace FLIP.API.Helpers;
+namespace FLIP.Application.Helpers;
 
 public static class Extensions
 {

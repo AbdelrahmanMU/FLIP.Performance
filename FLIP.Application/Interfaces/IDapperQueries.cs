@@ -1,6 +1,6 @@
-﻿using FLIP.API.Models;
+﻿using FLIP.Application.Models;
 
-namespace FLIP.API.Services;
+namespace FLIP.Application.Interfaces;
 
 public interface IDapperQueries
 {

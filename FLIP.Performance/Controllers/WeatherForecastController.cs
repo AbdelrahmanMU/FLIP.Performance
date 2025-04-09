@@ -1,3 +1,0 @@
-namespace FLIP.Performance.Controllers
-{
-}

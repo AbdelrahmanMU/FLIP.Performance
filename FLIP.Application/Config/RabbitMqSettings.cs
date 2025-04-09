@@ -1,4 +1,4 @@
-﻿namespace FLIP.API.Config;
+﻿namespace FLIP.Application.Config;
 
 public class RabbitMqSettings
 {

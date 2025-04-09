@@ -1,4 +1,4 @@
-﻿namespace FLIP.Performance.Enums;
+﻿namespace FLIP.API.Enums;
 
 public enum AuthenticationTypes
 {

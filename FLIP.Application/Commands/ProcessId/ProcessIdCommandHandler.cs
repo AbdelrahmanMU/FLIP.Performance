@@ -1,24 +1,95 @@
-﻿using FLIP.API.Config;
-using FLIP.API.Helpers;
-using FLIP.API.Models;
+﻿using FLIP.Application.Config;
+using FLIP.Application.Helpers;
+using FLIP.Application.Interfaces;
+using FLIP.Application.Models;
+using MediatR;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Polly;
 using Serilog;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 
-namespace FLIP.API.Utilities;
+namespace FLIP.Application.Commands.ProcessId;
 
-public class ApiCaller(IConfiguration configuration)
+public class ProcessIdCommandHandler(IConfiguration configuration,
+    IDapperQueries dapperQueries,
+    IMemoryCache memoryCache) : IRequestHandler<ProcessIdCommand, Response>
 {
     private readonly HttpClient _httpClient = new();
     private readonly int _maxDegreeOfParallelism = 16;
-    private readonly Serilog.ILogger _logger = Log.Logger;
+    private readonly ILogger _logger = Log.Logger;
     private readonly List<ApiLog> _logs = [];
     private readonly List<ErrorLogs> _errorLogs = [];
     private readonly List<FreelancerData> _freelancersData = [];
     private readonly IConfiguration _configuration = configuration;
 
-    public async Task<bool> CallExternalApiAsync(ApiRequest api, int id/*, FreelancerData  freelancer*/)
+    private readonly IDapperQueries _dapperQueries = dapperQueries;
+    private readonly IMemoryCache _memoryCache = memoryCache;
+
+    public async Task<Response> Handle(ProcessIdCommand request, CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        if (_memoryCache.TryGetValue(request.Id, out _))
+        {
+            // ID is already cached
+            return new Response
+            {
+                Success = true,
+                StatusCode = (int)HttpStatusCode.OK,
+            };
+        }
+
+        // ID is not cached, so we add it
+        _memoryCache.Set(request.Id, true);
+
+        // At least one success
+        var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(request.Id);
+        if (success)
+        {
+            try
+            {
+                await _dapperQueries.InsertLogs(apiLogs);
+                await _dapperQueries.InsertFreelancers(freelancerDataResponse);
+                await _dapperQueries.InsertFreelancersRide(freelancerDataResponse);
+                await _dapperQueries.InsertErrorLogs(errorLogs);
+
+                stopwatch.Stop();
+
+                return new Response
+                {
+                    Success = true,
+                    StatusCode = (int)HttpStatusCode.OK,
+                };
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _logger.Error("Failed to update the DB:", ex.Message);
+                throw new Exception(ex.Message);
+            }
+        }
+        else
+        {
+            _logger.Error("Failed to ExecuteParallelApiCallsAsync");
+
+            stopwatch.Stop();
+
+            return new Response
+            {
+                Success = false,
+                StatusCode = (int)HttpStatusCode.BadRequest,
+                Message = "There is no any API get successed",
+                Errors = apiLogs.Select(x => x.Message).ToList()
+            };
+        }
+
+    }
+
+    public async Task<bool> CallExternalApiAsync(ApiRequest api, string id/*, FreelancerData  freelancer*/)
     {
         var retryCount = int.Parse(_configuration["retryCount"] ?? "");
 
@@ -61,7 +132,7 @@ public class ApiCaller(IConfiguration configuration)
                     TransactionID = Guid.NewGuid(),
                     PlatformName = api.PlatformName,
                     IngestedAt = DateTime.Now.AddDays(-1),
-                    NationalId = id.ToString(),
+                    NationalId = id,
                     JsonContent = await response.Content.ReadAsStringAsync()
 
 
@@ -95,11 +166,11 @@ public class ApiCaller(IConfiguration configuration)
 
             _logs.Add(log);
 
-            return false;
+            throw new Exception(ex.Message);
         }
     }
 
-    public async Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)> ExecuteParallelApiCallsAsync(int id)
+    public async Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)> ExecuteParallelApiCallsAsync(string id)
     {
         var tasks = new List<Task<bool>>();
 
@@ -113,7 +184,7 @@ public class ApiCaller(IConfiguration configuration)
 
             foreach (var api in apis)
             {
-                api.Params.Insert(0, id.ToString());
+                api.Params.Insert(0, id);
 
                 api.PrepareParams();
 

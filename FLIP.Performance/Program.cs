@@ -1,7 +1,5 @@
-using FLIP.Performance.BackgroundJobs;
-using FLIP.Performance.Config;
-using FLIP.Performance.Consumers;
-using FLIP.Performance.Services;
+using FLIP.Application;
+using FLIP.Infrastructure;
 using Hangfire;
 using Serilog;
 
@@ -19,12 +17,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
-
-builder.Services.AddSingleton<IDapperQueries, DapperQueries>();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
 
 // Register RabbitMqConsumer
-builder.Services.AddSingleton<RabbitMqConsumer>();
+//builder.Services.AddSingleton<RabbitMqConsumer>();
 //builder.Services.AddSingleton<RecallingApis>();
 builder.Services.AddMemoryCache();
 
@@ -58,11 +55,8 @@ app.Use(async (context, next) =>
 });
 
 // Start the RabbitMQ Consumer in the background
-var consumer = app.Services.GetRequiredService<RabbitMqConsumer>();
 //var backgroundCalls = app.Services.GetRequiredService<RecallingApis>();
 
-
-await consumer.Start();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

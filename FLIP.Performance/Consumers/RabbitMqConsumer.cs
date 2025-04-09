@@ -1,6 +1,6 @@
-﻿using FLIP.Performance.Config;
-using FLIP.Performance.Services;
-using FLIP.Performance.Utilities;
+﻿using FLIP.API.Config;
+using FLIP.API.Services;
+using FLIP.API.Utilities;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -9,7 +9,7 @@ using Serilog;
 using System.Diagnostics;
 using System.Text;
 
-namespace FLIP.Performance.Consumers;
+namespace FLIP.API.Consumers;
 
 public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
     IDapperQueries dapperQueries,
@@ -21,7 +21,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
     private readonly Serilog.ILogger _logger = Log.Logger;
     private readonly IDapperQueries _dapperQueries = dapperQueries;
     private readonly IMemoryCache _memoryCache = memoryCache;
-   
+
     public async Task Start()
     {
         try
@@ -129,7 +129,7 @@ public class RabbitMqConsumer(IOptions<RabbitMqSettings> options,
             var tcs = new TaskCompletionSource();
             await tcs.Task;
         }
-            catch (Exception ex)
+        catch (Exception ex)
         {
             _logger.Error($"[Consumer] Error in Start method: {ex.Message}", ex.Message);
         }

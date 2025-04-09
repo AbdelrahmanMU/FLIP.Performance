@@ -1,9 +1,9 @@
-﻿using FLIP.Performance.Services;
-using FLIP.Performance.Utilities;
+﻿using FLIP.API.Services;
+using FLIP.API.Utilities;
 using Hangfire;
 using Serilog;
 
-namespace FLIP.Performance.BackgroundJobs;
+namespace FLIP.API.BackgroundJobs;
 
 public class RecallingApis(IDapperQueries dapperQueries,
     IConfiguration configuration,
@@ -25,10 +25,10 @@ public class RecallingApis(IDapperQueries dapperQueries,
 
         var ids = await _dapperQueries.GetFreelancersIds();
 
-        foreach (var id in ids) 
+        foreach (var id in ids)
         {
             var (success, apiLogs, freelancerDataResponse, errorLogs) = await _apiCaller.ExecuteParallelApiCallsAsync(int.Parse(id));
-           
+
             if (success)
             {
                 try

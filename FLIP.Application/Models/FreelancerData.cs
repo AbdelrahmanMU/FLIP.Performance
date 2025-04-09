@@ -1,4 +1,4 @@
-﻿namespace FLIP.API.Models;
+﻿namespace FLIP.Application.Models;
 
 public class FreelancerData
 {
