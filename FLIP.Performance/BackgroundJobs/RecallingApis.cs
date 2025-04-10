@@ -1,18 +1,19 @@
-﻿using FLIP.API.Services;
-using FLIP.API.Utilities;
+﻿using FLIP.Application.Commands.ProcessId;
+using FLIP.Application.Interfaces;
 using Hangfire;
+using MediatR;
 using Serilog;
 
 namespace FLIP.API.BackgroundJobs;
 
 public class RecallingApis(IDapperQueries dapperQueries,
-    IConfiguration configuration,
-    IRecurringJobManager recurringJobManager)
+    IRecurringJobManager recurringJobManager,
+    ISender sender)
 {
     private readonly IDapperQueries _dapperQueries = dapperQueries;
-    private readonly ApiCaller _apiCaller = new(configuration);
     private readonly Serilog.ILogger _logger = Log.Logger;
     private readonly IRecurringJobManager _recurringJobManager = recurringJobManager;
+    private readonly ISender _mediator = sender;
 
     public void SchedulingTheJob()
     {
@@ -27,16 +28,16 @@ public class RecallingApis(IDapperQueries dapperQueries,
 
         foreach (var id in ids)
         {
-            var (success, apiLogs, freelancerDataResponse, errorLogs) = await _apiCaller.ExecuteParallelApiCallsAsync(int.Parse(id));
+            var processIdResult = await _mediator.Send(new ProcessIdCommand { Id = id });
 
-            if (success)
+            if (processIdResult.Success)
             {
                 try
                 {
-                    await _dapperQueries.InsertLogs(apiLogs);
-                    await _dapperQueries.UpdateFreelancers(freelancerDataResponse);
-                    await _dapperQueries.UpdateFreelancersRide(freelancerDataResponse);
-                    await _dapperQueries.InsertErrorLogs(errorLogs);
+                    await _dapperQueries.InsertLogs(processIdResult.ApiLogData);
+                    await _dapperQueries.UpdateFreelancers(processIdResult.FreelancerData);
+                    await _dapperQueries.UpdateFreelancersRide(processIdResult.FreelancerData);
+                    await _dapperQueries.InsertErrorLogs(processIdResult.ErrorLogsData);
                 }
                 catch (Exception ex)
                 {

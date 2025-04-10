@@ -7,4 +7,8 @@ public class Response
     public string? Message { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.Now;
     public List<string?> Errors { get; set; } = [];
+
+    public List<FreelancerData> FreelancerData { get; set; } = [];
+    public List<ApiLog> ApiLogData { get; set; } = [];
+    public List<ErrorLogs> ErrorLogsData { get; set; } = [];
 }

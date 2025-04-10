@@ -1,7 +1,6 @@
-﻿using FLIP.Application.Config;
+﻿using System.Text.Json;
+using FLIP.Application.Config;
 using FLIP.Application.Models;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace FLIP.Application.Helpers;
 

@@ -1,16 +1,15 @@
-﻿using FLIP.Application.Config;
+﻿using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
+using FLIP.Application.Config;
 using FLIP.Application.Helpers;
 using FLIP.Application.Interfaces;
 using FLIP.Application.Models;
 using MediatR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Polly;
 using Serilog;
-using System.Diagnostics;
-using System.Net;
-using System.Net.Http.Headers;
 
 namespace FLIP.Application.Commands.ProcessId;
 
@@ -63,6 +62,9 @@ public class ProcessIdCommandHandler(IConfiguration configuration,
                 {
                     Success = true,
                     StatusCode = (int)HttpStatusCode.OK,
+                    FreelancerData = freelancerDataResponse,
+                    ApiLogData = apiLogs,
+                    ErrorLogsData = errorLogs
                 };
             }
             catch (Exception ex)

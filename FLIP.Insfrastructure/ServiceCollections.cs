@@ -8,7 +8,7 @@ public static class ServiceCollections
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddScoped<IDapperQueries, DapperQueries>();
+        services.AddSingleton<IDapperQueries, DapperQueries>();
 
         return services;
     }

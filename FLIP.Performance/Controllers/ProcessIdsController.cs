@@ -11,8 +11,7 @@ public class ProcessIdsController(ISender sender) : ControllerBase
     [HttpPost("{id}")]
     public async Task<IActionResult> Process(string id)
     {
-        await _mediator.Send(new ProcessIdCommand { Id = id });
-        return Ok("Processing complete.");
+        return Ok(await _mediator.Send(new ProcessIdCommand { Id = id }));
     }
 
 }

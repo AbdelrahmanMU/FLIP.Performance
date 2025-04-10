@@ -1,3 +1,4 @@
+using FLIP.API.BackgroundJobs;
 using FLIP.Application;
 using FLIP.Infrastructure;
 using Hangfire;
@@ -8,9 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Register Serilog as the default logger
 Log.Information("Application Starting...");
 
-//// Add services to the container.
-//builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
-//builder.Services.AddHangfireServer();
+// Add services to the container.
+builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -19,10 +20,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+builder.Services.AddScoped<RecallingApis>();
 
-// Register RabbitMqConsumer
-//builder.Services.AddSingleton<RabbitMqConsumer>();
-//builder.Services.AddSingleton<RecallingApis>();
 builder.Services.AddMemoryCache();
 
 Log.Logger = new LoggerConfiguration()
@@ -37,6 +36,12 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var recallingApis = scope.ServiceProvider.GetRequiredService<RecallingApis>();
+    recallingApis.SchedulingTheJob();
+}
 
 app.Use(async (context, next) =>
 {
@@ -54,9 +59,6 @@ app.Use(async (context, next) =>
     }
 });
 
-// Start the RabbitMQ Consumer in the background
-//var backgroundCalls = app.Services.GetRequiredService<RecallingApis>();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -67,8 +69,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-//app.UseHangfireDashboard("/dashboard");
-//backgroundCalls.SchedulingTheJob();
+app.UseHangfireDashboard("/dashboard");
 
 app.UseAuthorization();
 
