@@ -1,6 +1,12 @@
+using System.Text;
+using FLIP.API.BackgroundJobs;
 using FLIP.Application;
+using FLIP.Application.Config;
 using FLIP.Infrastructure;
 using Hangfire;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,9 +14,66 @@ var builder = WebApplication.CreateBuilder(args);
 // Register Serilog as the default logger
 Log.Information("Application Starting...");
 
-//// Add services to the container.
-//builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
-//builder.Services.AddHangfireServer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+    // Add JWT Bearer Auth definition
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Example: \"Bearer {your_token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    // Apply Bearer token to all endpoints by default
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
+
+var key = Encoding.ASCII.GetBytes(builder.Configuration["jwtKey"] ?? "");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = false // disables expiration check
+    };
+});
+
+builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
+
+// Add services to the container.
+builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -19,10 +82,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+builder.Services.AddScoped<RecallingApis>();
 
-// Register RabbitMqConsumer
-//builder.Services.AddSingleton<RabbitMqConsumer>();
-//builder.Services.AddSingleton<RecallingApis>();
 builder.Services.AddMemoryCache();
 
 Log.Logger = new LoggerConfiguration()
@@ -37,6 +98,12 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var recallingApis = scope.ServiceProvider.GetRequiredService<RecallingApis>();
+    recallingApis.SchedulingTheJob();
+}
 
 app.Use(async (context, next) =>
 {
@@ -54,9 +121,6 @@ app.Use(async (context, next) =>
     }
 });
 
-// Start the RabbitMQ Consumer in the background
-//var backgroundCalls = app.Services.GetRequiredService<RecallingApis>();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -67,8 +131,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-//app.UseHangfireDashboard("/dashboard");
-//backgroundCalls.SchedulingTheJob();
+app.UseHangfireDashboard("/dashboard");
 
 app.UseAuthorization();
 

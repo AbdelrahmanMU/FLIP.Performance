@@ -1,8 +1,10 @@
 using FLIP.Application.Commands.ProcessId;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace FLIP.API.Controllers;
 
+[Authorize]
 [Route("api/process-id/")]
 public class ProcessIdsController(ISender sender) : ControllerBase
 {
@@ -11,8 +13,7 @@ public class ProcessIdsController(ISender sender) : ControllerBase
     [HttpPost("{id}")]
     public async Task<IActionResult> Process(string id)
     {
-        await _mediator.Send(new ProcessIdCommand { Id = id });
-        return Ok("Processing complete.");
+        return Ok(await _mediator.Send(new ProcessIdCommand { Id = id }));
     }
 
 }

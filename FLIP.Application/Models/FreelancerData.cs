@@ -3,9 +3,9 @@
 public class FreelancerData
 {
     public Guid TransactionID { get; set; }
-    public DateTimeOffset IngestedAt { get; set; }
+    public DateTimeOffset IngestedAt { get; set; } = DateTime.Now.AddDays(-1);
     public string PlatformName { get; set; } = default!;
     public string NationalId { get; set; } = default!;
-
+    public bool IsRide { get; set; }
     public string? JsonContent { get; set; }
 }

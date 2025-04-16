@@ -6,5 +6,6 @@ public class ApiRequest
     public string Url { get; set; } = default!;
     public bool IsBearerAuth { get; set; }
     public string? BearerToken { get; set; }
+    public bool IsRide { get; set; }
     public List<string> Params { get; set; } = [];
 }

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FLIP.Application", "FLIP.Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FLIP.Infrastructure", "FLIP.Insfrastructure\FLIP.Infrastructure.csproj", "{9B4E8CCC-6ADE-4DC9-8510-02A8A65E0922}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FLIP.Token.Generator", "FLIP.Token.Generator\FLIP.Token.Generator.csproj", "{ABB73787-8B5A-4084-8C15-08DAFBD30155}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9B4E8CCC-6ADE-4DC9-8510-02A8A65E0922}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B4E8CCC-6ADE-4DC9-8510-02A8A65E0922}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B4E8CCC-6ADE-4DC9-8510-02A8A65E0922}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABB73787-8B5A-4084-8C15-08DAFBD30155}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABB73787-8B5A-4084-8C15-08DAFBD30155}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABB73787-8B5A-4084-8C15-08DAFBD30155}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABB73787-8B5A-4084-8C15-08DAFBD30155}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
