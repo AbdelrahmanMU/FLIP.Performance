@@ -121,6 +121,9 @@ app.Use(async (context, next) =>
     }
 });
 
+// Start the RabbitMQ Consumer in the background
+//var backgroundCalls = app.Services.GetRequiredService<RecallingApis>();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
