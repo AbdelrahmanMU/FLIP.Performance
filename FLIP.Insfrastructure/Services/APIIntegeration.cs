@@ -100,12 +100,11 @@ public class APIIntegeration(IConfiguration configuration,
         }
     }
 
-    private async Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)> ExecuteParallelApiCallsAsync(string id)
+    protected virtual async Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)> ExecuteParallelApiCallsAsync(string id)
     {
         var tasks = new List<Task<bool>>();
 
         var apis = APIHelper.APIRequests();
-        //var dummyData = APIHelper.DumyData();
 
         using (var semaphore = new SemaphoreSlim(_maxDegreeOfParallelism))
         {
