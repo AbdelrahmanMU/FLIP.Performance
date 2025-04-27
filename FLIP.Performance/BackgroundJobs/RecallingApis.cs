@@ -1,5 +1,6 @@
 ﻿using FLIP.Application.Commands.ProcessId;
 using FLIP.Application.Interfaces;
+using FLIP.Application.Models;
 using Hangfire;
 using MediatR;
 using Serilog;
@@ -26,17 +27,35 @@ public class RecallingApis(IDapperQueries dapperQueries,
 
         var ids = await _dapperQueries.GetFreelancersIds();
 
-        foreach (var id in ids)
+        var distinctIds = ids.Distinct();
+
+        foreach (var id in distinctIds)
         {
-            var processIdResult = await _mediator.Send(new ProcessIdCommand { Id = id });
+            var processIdResult = await _mediator.Send(new ProcessIdCommand { Id = id, IsUpdating = true });
 
             if (processIdResult.Success)
             {
                 try
                 {
+                    var rides = processIdResult.FreelancerData
+                    .Where(x => x.IsRide)
+                    .DistinctBy(x => x.NationalId).ToList();
+
+                    var projects = processIdResult.FreelancerData
+                        .Where(x => !x.IsRide)
+                        .DistinctBy(x => x.NationalId).ToList();
+
+                    if (rides.Count != 0)
+                    {
+                        await _dapperQueries.UpdateFreelancersRide(rides);
+                    }
+
+                    if (projects.Count != 0)
+                    {
+                        await _dapperQueries.UpdateFreelancers(projects);
+                    }
+
                     await _dapperQueries.InsertLogs(processIdResult.ApiLogData);
-                    await _dapperQueries.UpdateFreelancers(processIdResult.FreelancerData);
-                    await _dapperQueries.UpdateFreelancersRide(processIdResult.FreelancerData);
                     await _dapperQueries.InsertErrorLogs(processIdResult.ErrorLogsData);
                 }
                 catch (Exception ex)

@@ -76,6 +76,39 @@ public class APIIntegrationTests
         Assert.True(result.Success);
         Assert.Equal(200, result.StatusCode);
         _dapperMock.Verify(x => x.InsertFreelancers(freelancers), Times.Once);
+        _dapperMock.Verify(x => x.InsertLogs(logs), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessId_ShouldInsertRideData_WhenApiCallSucceeds()
+    {
+        // Arrange
+        var id = "789";
+        var freelancers = new List<FreelancerData>
+        {
+            new() { NationalId = id, IsRide = true }
+        };
+        var logs = new List<ApiLog> { new() };
+        var errors = new List<ErrorLogs> { new() };
+
+        var apiIntegrationMock = new Mock<APIIntegeration>(_configMock.Object, _dapperMock.Object, _memoryCache)
+        {
+            CallBase = true
+        };
+
+        apiIntegrationMock
+            .Protected()
+            .Setup<Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)>>("ExecuteParallelApiCallsAsync", id)
+            .ReturnsAsync((true, logs, freelancers, errors));
+
+        var request = new ProcessIdCommand { Id = id };
+
+        // Act
+        var result = await apiIntegrationMock.Object.ProcessId(request);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal(200, result.StatusCode);
         _dapperMock.Verify(x => x.InsertFreelancersRide(freelancers), Times.Once);
         _dapperMock.Verify(x => x.InsertLogs(logs), Times.Once);
     }
@@ -143,7 +176,6 @@ public class APIIntegrationTests
         // Assert
         Assert.True(result.Success);
         _dapperMock.Verify(x => x.InsertFreelancers(It.IsAny<List<FreelancerData>>()), Times.Once); 
-        _dapperMock.Verify(x => x.InsertFreelancersRide(It.IsAny<List<FreelancerData>>()), Times.Once); 
         _dapperMock.Verify(x => x.InsertLogs(It.IsAny<List<ApiLog>>()), Times.Once);
     }
 

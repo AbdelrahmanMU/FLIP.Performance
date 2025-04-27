@@ -13,7 +13,7 @@ using Serilog;
 
 namespace FLIP.Infrastructure.Services;
 
-public class APIIntegeration(IConfiguration configuration, 
+public class APIIntegeration(IConfiguration configuration,
     IDapperQueries dapperQueries,
     IMemoryCache memoryCache) : IAPIIntegeration
 {
@@ -26,7 +26,7 @@ public class APIIntegeration(IConfiguration configuration,
     private readonly IConfiguration _configuration = configuration;
     private readonly IDapperQueries _dapperQueries = dapperQueries;
     private readonly IMemoryCache _memoryCache = memoryCache;
-        
+
     public async Task<Response> ProcessId(ProcessIdCommand request)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -50,8 +50,23 @@ public class APIIntegeration(IConfiguration configuration,
         {
             try
             {
-                var rides = freelancerDataResponse.Where(x => x.IsRide).ToList();
-                var projects = freelancerDataResponse.Where(x => !x.IsRide).ToList();
+                if (request.IsUpdating)
+                {
+                    return new Response
+                    {
+                        Success = true,
+                        StatusCode = (int)HttpStatusCode.OK,
+                        FreelancerData = freelancerDataResponse,
+                        ApiLogData = apiLogs,
+                        ErrorLogsData = errorLogs
+                    };
+                }
+
+                var rides = freelancerDataResponse
+                    .Where(x => x.IsRide).ToList();
+
+                var projects = freelancerDataResponse
+                    .Where(x => !x.IsRide).ToList();
 
                 if (rides.Count != 0)
                 {
