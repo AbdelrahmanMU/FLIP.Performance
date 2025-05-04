@@ -9,6 +9,7 @@ using FLIP.Application.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Polly;
+using Polly.Timeout;
 using Serilog;
 
 namespace FLIP.Infrastructure.Services;
@@ -167,10 +168,15 @@ public class APIIntegeration(IConfiguration configuration,
     private async Task<bool> CallExternalApiAsync(ApiRequest api, string id)
     {
         var retryCount = int.Parse(_configuration["retryCount"] ?? "");
+        var maxResponseTime = int.Parse(_configuration["maxResponseTime"] ?? "");
+
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(maxResponseTime));
+        var cancellationToken = cts.Token;
 
         var policy = Policy
             .Handle<HttpRequestException>()
-            .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode && r.StatusCode != System.Net.HttpStatusCode.NotFound)
+            .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode && r.StatusCode != HttpStatusCode.NotFound)
+            .Or<TimeoutRejectedException>()
             .WaitAndRetryAsync(retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         HttpResponseMessage response = new();
@@ -185,8 +191,11 @@ public class APIIntegeration(IConfiguration configuration,
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", api.BearerToken);
             }
 
-            response = await policy.ExecuteAsync(() =>
-                _httpClient.GetAsync($"{api.Url}"));
+            response = await policy.ExecuteAsync(async (ct) =>
+            {
+                // Perform the HTTP GET request with the cancellation token
+                return await _httpClient.GetAsync($"{api.Url}", ct);
+            }, cancellationToken);
 
             stopwatch.Stop();
             double responseTimeMs = stopwatch.Elapsed.TotalMilliseconds;

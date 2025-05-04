@@ -14,7 +14,7 @@ public class ProcessIdCommandHandler(IAPIIntegeration aPIIntegeration,
     {
         var processIdResponse = await _aPIIntegeration.ProcessId(request);
 
-        await _notifyMessages.NotifyBREAsync(int.Parse(request.Id));
+        await _notifyMessages.NotifyBREAsync(int.Parse(request.Id), processIdResponse);
 
         return processIdResponse;
     }

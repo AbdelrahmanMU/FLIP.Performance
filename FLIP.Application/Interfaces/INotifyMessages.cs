@@ -1,6 +1,8 @@
-﻿namespace FLIP.Application.Interfaces;
+﻿using FLIP.Application.Models;
+
+namespace FLIP.Application.Interfaces;
 
 public interface INotifyMessages
 {
-    Task NotifyBREAsync(int number);
+    Task NotifyBREAsync(int number, Response apiResponse);
 }
