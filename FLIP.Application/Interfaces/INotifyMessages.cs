@@ -4,5 +4,6 @@ namespace FLIP.Application.Interfaces;
 
 public interface INotifyMessages
 {
-    Task NotifyBREAsync(int number, Response apiResponse);
+    Task NotifyFLIPRealTimeAsync(string number);
+    Task NotifyDailyJobAsync(int number, Response apiResponse);
 }

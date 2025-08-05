@@ -6,5 +6,6 @@ public class RabbitMqSettings
     public string UserName { get; set; } = default!;
     public string Password { get; set; } = default!;
     public int Port { get; set; }
-    public string QueueName { get; set; } = default!;
+    public string FLIPRealtimeQeueu { get; set; } = default!;
+    public string DailyJobQeueu { get; set; } = default!;
 }

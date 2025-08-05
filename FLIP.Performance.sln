@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FLIP.Token.Generator", "FLI
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FLIP.Tests", "FLIP.Test\FLIP.Tests.csproj", "{6E22E273-7E5D-4CB9-AA3F-04CE94229267}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildingBlock", "BuildingBlock\BuildingBlock.csproj", "{76644B1F-BEB0-46F2-A89E-4E92C7DA1E86}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{6E22E273-7E5D-4CB9-AA3F-04CE94229267}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E22E273-7E5D-4CB9-AA3F-04CE94229267}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E22E273-7E5D-4CB9-AA3F-04CE94229267}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76644B1F-BEB0-46F2-A89E-4E92C7DA1E86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76644B1F-BEB0-46F2-A89E-4E92C7DA1E86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76644B1F-BEB0-46F2-A89E-4E92C7DA1E86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76644B1F-BEB0-46F2-A89E-4E92C7DA1E86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

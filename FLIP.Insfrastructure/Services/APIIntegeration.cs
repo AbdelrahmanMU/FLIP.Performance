@@ -1,8 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net;
-using System.Net.Http.Headers;
-using FLIP.Application.Commands.ProcessId;
-using FLIP.Application.Config;
+﻿using FLIP.Application.Config;
 using FLIP.Application.Helpers;
 using FLIP.Application.Interfaces;
 using FLIP.Application.Models;
@@ -11,6 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Polly;
 using Polly.Timeout;
 using Serilog;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Headers;
 
 namespace FLIP.Infrastructure.Services;
 
@@ -21,18 +20,18 @@ public class APIIntegeration(IConfiguration configuration,
     private readonly HttpClient _httpClient = new();
     private readonly int _maxDegreeOfParallelism = 16;
     private readonly ILogger _logger = Log.Logger;
-    private readonly List<ApiLog> _logs = [];
-    private readonly List<ErrorLogs> _errorLogs = [];
-    private readonly List<FreelancerData> _freelancersData = [];
+    private ApiLog _log = new();
+    private ErrorLogs _errorLog = new();
+    private FreelancerData _freelancersData = new();
     private readonly IConfiguration _configuration = configuration;
     private readonly IDapperQueries _dapperQueries = dapperQueries;
     private readonly IMemoryCache _memoryCache = memoryCache;
 
-    public async Task<Response> ProcessId(ProcessIdCommand request)
+    public async Task<Response> ProcessId(FreelancerDto freelancer)
     {
         var stopwatch = Stopwatch.StartNew();
 
-        if (_memoryCache.TryGetValue(request.Id, out _))
+        if (_memoryCache.TryGetValue(freelancer.Id, out _))
         {
             // ID is already cached
             return new Response
@@ -43,15 +42,15 @@ public class APIIntegeration(IConfiguration configuration,
         }
 
         // ID is not cached, so we add it
-        _memoryCache.Set(request.Id, true);
+        _memoryCache.Set(freelancer.Id, true);
 
         // At least one success
-        var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(request.Id);
+        var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(freelancer);
         if (success)
         {
             try
             {
-                if (request.IsUpdating)
+                if (freelancer.IsUpdating)
                 {
                     return new Response
                     {
@@ -63,18 +62,16 @@ public class APIIntegeration(IConfiguration configuration,
                     };
                 }
 
-                var rides = freelancerDataResponse
-                    .Where(x => x.IsRide).ToList();
+                var rides = freelancerDataResponse.IsRide ? freelancerDataResponse : new FreelancerData();
 
-                var projects = freelancerDataResponse
-                    .Where(x => !x.IsRide).ToList();
+                var projects = !freelancerDataResponse.IsRide ? freelancerDataResponse : new FreelancerData();
 
-                if (rides.Count != 0)
+                if (rides is not null)
                 {
-                    await _dapperQueries.InsertFreelancersRide(rides);
+                    await _dapperQueries.InsertFreelancerRide(rides);
                 }
 
-                if (projects.Count != 0)
+                if (projects is not null)
                 {
                     await _dapperQueries.InsertFreelancers(projects);
                 }
@@ -111,12 +108,12 @@ public class APIIntegeration(IConfiguration configuration,
                 Success = false,
                 StatusCode = (int)HttpStatusCode.BadRequest,
                 Message = "There is no any API get successed",
-                Errors = apiLogs.Select(x => x.Message).ToList()
+                Errors = apiLogs.Message
             };
         }
     }
 
-    protected virtual async Task<(bool, List<ApiLog>, List<FreelancerData>, List<ErrorLogs>)> ExecuteParallelApiCallsAsync(string id)
+    protected virtual async Task<(bool, ApiLog, FreelancerData, ErrorLogs)> ExecuteParallelApiCallsAsync(FreelancerDto freelancerDto)
     {
         var tasks = new List<Task<bool>>();
 
@@ -127,28 +124,25 @@ public class APIIntegeration(IConfiguration configuration,
             var totalStopwatch = Stopwatch.StartNew(); // Start benchmark
             int i = 0;
 
-            foreach (var api in apis)
+            freelancerDto.Api.Params.Insert(0, freelancerDto.Id);
+
+            freelancerDto.Api.PrepareParams();
+
+            await semaphore.WaitAsync(); // Control concurrency level
+
+            tasks.Add(Task.Run(async () =>
             {
-                api.Params.Insert(0, id);
-
-                api.PrepareParams();
-
-                await semaphore.WaitAsync(); // Control concurrency level
-
-                tasks.Add(Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        return await CallExternalApiAsync(api, id);
-                    }
-                    finally
-                    {
-                        semaphore.Release();
-                    }
-                }));
+                    return await CallExternalApiAsync(freelancerDto.Api, freelancerDto.Id);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
 
-                i++;
-            }
+            i++;
 
             totalStopwatch.Stop();
 
@@ -162,7 +156,7 @@ public class APIIntegeration(IConfiguration configuration,
         int successCount = tasks.Count(t => t.Result);
         _logger.Information($"Completed {tasks.Count} API calls, {successCount} were successful.");
 
-        return (successCount >= 1, _logs, _freelancersData, _errorLogs);
+        return (successCount >= 1, _log, _freelancersData, _errorLog);
     }
 
     private async Task<bool> CallExternalApiAsync(ApiRequest api, string id)
@@ -221,10 +215,10 @@ public class APIIntegeration(IConfiguration configuration,
                     IsRide = api.IsRide
                 };
 
-                _freelancersData.Add(freelancerData);
+                _freelancersData = freelancerData;
             }
 
-            _logs.Add(log);
+            _log = log;
 
             return response.IsSuccessStatusCode;
         }
@@ -242,7 +236,7 @@ public class APIIntegeration(IConfiguration configuration,
                 LoggedAt = DateTime.UtcNow
             };
 
-            _logs.Add(log);
+            _log = log;
 
             throw new Exception(ex.Message);
         }

@@ -13,7 +13,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
     #region Insert
 
-    public async Task<int> InsertFreelancers(List<FreelancerData> freelancersData)
+    public async Task<int> InsertFreelancers(FreelancerData freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -28,7 +28,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> InsertFreelancersRide(List<FreelancerData> freelancersData)
+    public async Task<int> InsertFreelancerRide(FreelancerData freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -41,7 +41,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> InsertLogs(List<ApiLog> apiLogs)
+    public async Task<int> InsertLogs(ApiLog apiLogs)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -54,7 +54,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> InsertErrorLogs(List<ErrorLogs> apiLogs)
+    public async Task<int> InsertErrorLogs(ErrorLogs apiLogs)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -71,7 +71,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
     #region Update
 
-    public async Task<int> UpdateFreelancers(List<FreelancerData> freelancersData)
+    public async Task<int> UpdateFreelancers(FreelancerData freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
@@ -88,7 +88,7 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> UpdateFreelancersRide(List<FreelancerData> freelancersData)
+    public async Task<int> UpdateFreelancersRide(FreelancerData freelancersData)
     {
         using IDbConnection db = new SqlConnection(connectionString);
 

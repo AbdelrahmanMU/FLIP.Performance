@@ -37,20 +37,16 @@ public class RecallingApis(IDapperQueries dapperQueries,
             {
                 try
                 {
-                    var rides = processIdResult.FreelancerData
-                    .Where(x => x.IsRide)
-                    .DistinctBy(x => x.NationalId).ToList();
+                    var rides = processIdResult.FreelancerData.IsRide ? processIdResult.FreelancerData : new FreelancerData() ;
 
-                    var projects = processIdResult.FreelancerData
-                        .Where(x => !x.IsRide)
-                        .DistinctBy(x => x.NationalId).ToList();
+                    var projects = processIdResult.FreelancerData.IsRide ? processIdResult.FreelancerData : new FreelancerData();
 
-                    if (rides.Count != 0)
+                    if (rides is not null)
                     {
                         await _dapperQueries.UpdateFreelancersRide(rides);
                     }
 
-                    if (projects.Count != 0)
+                    if (projects is not null)
                     {
                         await _dapperQueries.UpdateFreelancers(projects);
                     }

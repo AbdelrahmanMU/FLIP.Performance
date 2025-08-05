@@ -6,9 +6,9 @@ public class Response
     public int StatusCode { get; set; }
     public string? Message { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.Now;
-    public List<string?> Errors { get; set; } = [];
+    public string? Errors { get; set; }
 
-    public List<FreelancerData> FreelancerData { get; set; } = [];
-    public List<ApiLog> ApiLogData { get; set; } = [];
-    public List<ErrorLogs> ErrorLogsData { get; set; } = [];
+    public FreelancerData FreelancerData { get; set; } = new();
+    public ApiLog ApiLogData { get; set; } = new();
+    public ErrorLogs ErrorLogsData { get; set; } = new();
 }

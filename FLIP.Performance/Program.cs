@@ -1,13 +1,15 @@
-using System.Text;
 using FLIP.API.BackgroundJobs;
 using FLIP.Application;
 using FLIP.Application.Config;
 using FLIP.Infrastructure;
+using FLIP.Infrastructure.Consumers;
 using Hangfire;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +52,8 @@ builder.Services.AddSwaggerGen(c =>
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["jwtKey"] ?? "");
 
+var rabbitmqSettings = builder.Configuration.GetSection("RabbitMqSettings").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -67,6 +71,31 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false,
         ValidateLifetime = false // disables expiration check
     };
+});
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<FLIPRealTimeConsumer>();
+    x.AddConsumer<DailyJobConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host($"rabbitmq://{rabbitmqSettings?.HostName}", h =>
+        {
+            h.Username(rabbitmqSettings!.UserName);
+            h.Password(rabbitmqSettings!.Password);
+        });
+
+        cfg.ReceiveEndpoint(rabbitmqSettings!.FLIPRealtimeQeueu, e =>
+        {
+            e.ConfigureConsumer<FLIPRealTimeConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint(rabbitmqSettings!.DailyJobQeueu, e =>
+        {
+            e.ConfigureConsumer<DailyJobConsumer>(context);
+        });
+    });
 });
 
 builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMqSettings"));
@@ -120,9 +149,6 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsync("An unexpected error occurred.");
     }
 });
-
-// Start the RabbitMQ Consumer in the background
-//var backgroundCalls = app.Services.GetRequiredService<RecallingApis>();
 
 
 // Configure the HTTP request pipeline.

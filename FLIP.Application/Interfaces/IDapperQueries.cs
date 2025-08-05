@@ -4,12 +4,12 @@ namespace FLIP.Application.Interfaces;
 
 public interface IDapperQueries
 {
-    Task<int> InsertFreelancers(List<FreelancerData> freelancersData);
-    Task<int> InsertFreelancersRide(List<FreelancerData> freelancersData);
-    Task<int> InsertLogs(List<ApiLog> apiLogs);
-    Task<int> InsertErrorLogs(List<ErrorLogs> apiLogs);
+    Task<int> InsertFreelancers(FreelancerData freelancersData);
+    Task<int> InsertFreelancerRide(FreelancerData freelancersData);
+    Task<int> InsertLogs(ApiLog apiLogs);
+    Task<int> InsertErrorLogs(ErrorLogs apiLogs);
     Task<List<string>> GetFreelancersIds();
 
-    Task<int> UpdateFreelancers(List<FreelancerData> freelancersData);
-    Task<int> UpdateFreelancersRide(List<FreelancerData> freelancersData);
+    Task<int> UpdateFreelancers(FreelancerData freelancersData);
+    Task<int> UpdateFreelancersRide(FreelancerData freelancersData);
 }

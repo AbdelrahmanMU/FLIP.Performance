@@ -8,9 +8,13 @@
 
 	<ItemGroup>
 		<PackageReference Include="Dapper" Version="2.1.66" />
+		<PackageReference Include="MassTransit" Version="8.5.1" />
+		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.1" />
+		<PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\BuildingBlock\BuildingBlock.csproj" />
 		<ProjectReference Include="..\FLIP.Application\FLIP.Application.csproj" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />

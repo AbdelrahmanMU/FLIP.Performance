@@ -1,50 +1,34 @@
-﻿using FLIP.Application.Config;
+﻿using BuildingBlock.Contracts;
+using FLIP.Application.Helpers;
 using FLIP.Application.Interfaces;
-using FLIP.Application.Models;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
+using MassTransit;
 using Serilog;
-using System.Text;
 
 namespace FLIP.Infrastructure.Services;
 
-public class NotifyMessages(IOptions<RabbitMqSettings> settings) : INotifyMessages
+public class NotifyMessages(IPublishEndpoint publish) : INotifyMessages
 {
-    private readonly RabbitMqSettings _settings = settings.Value;
     private readonly ILogger _logger = Log.Logger;
+    private readonly IPublishEndpoint _publish = publish;
 
-    public async Task NotifyBREAsync(int number, Response apiResponse)
+    public async Task NotifyFLIPRealTimeAsync(string freelancerId)
     {
-        var factory = new ConnectionFactory()
-        {
-            HostName = _settings.HostName,
-            Port = _settings.Port,
-            UserName = _settings.UserName,
-            Password = _settings.Password,
-        };
-
-        using var connection = await factory.CreateConnectionAsync();
-        using var channel = await connection.CreateChannelAsync();
-
-        await channel.QueueDeclareAsync(queue: _settings.QueueName,
-                             durable: true,
-                             exclusive: false,
-                             autoDelete: false);
+        var apis = APIHelper.APIRequests();
 
         try
         {
-            var bodyString = $"Freelancer ID: {number} \n"
-                + $"Number of succeeded requests: {apiResponse.FreelancerData.Count}  \n"
-                + $"Number of failed requests: {apiResponse.ApiLogData.Where(x => x.StatusCode != null && x.StatusCode.Value != 200 && x.StatusCode.Value != 201).ToList().Count}";
+            var message = new PlatformRequestMessage();
 
-            var body = Encoding.UTF8.GetBytes(bodyString);
+            foreach (var api in apis)
+            {
+                message.FreelancerId = freelancerId;
+                message.PlatformName = api.PlatformName;
 
-            await channel.BasicPublishAsync(
-                exchange: "",
-                routingKey: _settings.QueueName,
-                body: body);
+                await _publish.Publish(message);
 
-            _logger.Information($"[Publisher] Sent: {number}");
+                _logger.Information($"[Publisher] Sent: {freelancerId}");
+            }
+            
         }
         catch (Exception ex)
         {
@@ -52,5 +36,10 @@ public class NotifyMessages(IOptions<RabbitMqSettings> settings) : INotifyMessag
 
             throw new Exception(ex.Message);
         }
+    }
+
+    public Task NotifyDailyJobAsync(int number, Application.Models.Response apiResponse)
+    {
+        throw new NotImplementedException();
     }
 }

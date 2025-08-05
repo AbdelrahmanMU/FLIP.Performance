@@ -5,5 +5,5 @@ namespace FLIP.Application.Interfaces;
 
 public interface IAPIIntegeration
 {
-    Task<Response> ProcessId(ProcessIdCommand request);
+    Task<Response> ProcessId(FreelancerDto request);
 }
