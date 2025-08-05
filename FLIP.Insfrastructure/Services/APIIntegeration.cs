@@ -122,7 +122,6 @@ public class APIIntegeration(IConfiguration configuration,
         using (var semaphore = new SemaphoreSlim(_maxDegreeOfParallelism))
         {
             var totalStopwatch = Stopwatch.StartNew(); // Start benchmark
-            int i = 0;
 
             freelancerDto.Api.Params.Insert(0, freelancerDto.Id);
 
@@ -141,8 +140,6 @@ public class APIIntegeration(IConfiguration configuration,
                     semaphore.Release();
                 }
             }));
-
-            i++;
 
             totalStopwatch.Stop();
 
