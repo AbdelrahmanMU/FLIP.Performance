@@ -31,18 +31,18 @@ public class APIIntegeration(IConfiguration configuration,
     {
         var stopwatch = Stopwatch.StartNew();
 
-        if (_memoryCache.TryGetValue(freelancer.Id, out _))
-        {
-            // ID is already cached
-            return new Response
-            {
-                Success = true,
-                StatusCode = (int)HttpStatusCode.OK,
-            };
-        }
+        //if (_memoryCache.TryGetValue(freelancer.Id, out _))
+        //{
+        //    // ID is already cached
+        //    return new Response
+        //    {
+        //        Success = true,
+        //        StatusCode = (int)HttpStatusCode.OK,
+        //    };
+        //}
 
-        // ID is not cached, so we add it
-        _memoryCache.Set(freelancer.Id, true);
+        //// ID is not cached, so we add it
+        //_memoryCache.Set(freelancer.Id, true);
 
         // At least one success
         var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(freelancer);
@@ -223,7 +223,10 @@ public class APIIntegeration(IConfiguration configuration,
         {
             stopwatch.Stop();
             _logger.Error($"[API Caller] API call failed after {retryCount} retries", ex.Message);
+           
             log.Message = ex.Message;
+            log.RequestUri = api.Url;
+            log.StatusCode = (int)response.StatusCode;
 
             var errorLog = new ErrorLogs
             {
@@ -234,6 +237,7 @@ public class APIIntegeration(IConfiguration configuration,
             };
 
             _log = log;
+            _errorLog = errorLog;
 
             throw new Exception(ex.Message);
         }
