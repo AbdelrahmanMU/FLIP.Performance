@@ -46,6 +46,10 @@ public class APIIntegeration(IConfiguration configuration,
 
         // At least one success
         var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(freelancer);
+
+        await _dapperQueries.InsertLogs(apiLogs);
+        await _dapperQueries.InsertErrorLogs(errorLogs);
+
         if (success)
         {
             try
@@ -76,9 +80,6 @@ public class APIIntegeration(IConfiguration configuration,
                     await _dapperQueries.InsertFreelancers(projects);
                 }
 
-                await _dapperQueries.InsertLogs(apiLogs);
-                await _dapperQueries.InsertErrorLogs(errorLogs);
-
                 stopwatch.Stop();
 
                 return new Response
@@ -94,6 +95,7 @@ public class APIIntegeration(IConfiguration configuration,
             {
                 stopwatch.Stop();
                 _logger.Error("Failed to update the DB:", ex.Message);
+
                 throw new Exception(ex.Message);
             }
         }
