@@ -103,13 +103,7 @@ public class APIIntegeration(IConfiguration configuration,
 
             stopwatch.Stop();
 
-            return new Response
-            {
-                Success = false,
-                StatusCode = (int)HttpStatusCode.BadRequest,
-                Message = "There is no any API get successed",
-                Errors = apiLogs.Message
-            };
+            throw new Exception("There is no any API call succeed");
         }
     }
 

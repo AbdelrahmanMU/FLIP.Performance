@@ -88,11 +88,13 @@ builder.Services.AddMassTransit(x =>
 
         cfg.ReceiveEndpoint(rabbitmqSettings!.FLIPRealtimeQeueu, e =>
         {
+            e.UseMessageRetry(r => r.Interval(rabbitmqSettings.RetryCount, TimeSpan.FromSeconds(10)));
             e.ConfigureConsumer<FLIPRealTimeConsumer>(context);
         });
 
         cfg.ReceiveEndpoint(rabbitmqSettings!.DailyJobQeueu, e =>
         {
+            e.UseMessageRetry(r => r.Interval(rabbitmqSettings.RetryCount, TimeSpan.FromSeconds(10)));
             e.ConfigureConsumer<DailyJobConsumer>(context);
         });
     });

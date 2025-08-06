@@ -8,4 +8,5 @@ public class RabbitMqSettings
     public int Port { get; set; }
     public string FLIPRealtimeQeueu { get; set; } = default!;
     public string DailyJobQeueu { get; set; } = default!;
+    public int RetryCount { get; set; }
 }
