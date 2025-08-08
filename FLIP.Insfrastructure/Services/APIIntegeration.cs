@@ -113,8 +113,6 @@ public class APIIntegeration(IConfiguration configuration,
 	{
 		var tasks = new List<Task<bool>>();
 
-		var apis = APIHelper.APIRequests();
-
 		using (var semaphore = new SemaphoreSlim(_maxDegreeOfParallelism))
 		{
 			var totalStopwatch = Stopwatch.StartNew(); // Start benchmark
