@@ -44,23 +44,27 @@ public class APIIntegeration(IConfiguration configuration,
 		//// ID is not cached, so we add it
 		//_memoryCache.Set(freelancer.Id, true);
 
-		// At least one success
-		var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(freelancer);
-		if (success)
-		{
-			try
-			{
-				if (freelancer.IsUpdating)
-				{
-					return new Response
-					{
-						Success = true,
-						StatusCode = (int)HttpStatusCode.OK,
-						FreelancerData = freelancerDataResponse,
-						ApiLogData = apiLogs,
-						ErrorLogsData = errorLogs
-					};
-				}
+        // At least one success
+        var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(freelancer);
+
+        await _dapperQueries.InsertLogs(apiLogs);
+        await _dapperQueries.InsertErrorLogs(errorLogs);
+
+        if (success)
+        {
+            try
+            {
+                if (freelancer.IsUpdating)
+                {
+                    return new Response
+                    {
+                        Success = true,
+                        StatusCode = (int)HttpStatusCode.OK,
+                        FreelancerData = freelancerDataResponse,
+                        ApiLogData = apiLogs,
+                        ErrorLogsData = errorLogs
+                    };
+                }
 
 				var rides = freelancerDataResponse.IsRide ? freelancerDataResponse : null;
 
@@ -76,42 +80,34 @@ public class APIIntegeration(IConfiguration configuration,
 					await _dapperQueries.InsertFreelancers(projects);
 				}
 
-				await _dapperQueries.InsertLogs(apiLogs);
-				await _dapperQueries.InsertErrorLogs(errorLogs);
+                stopwatch.Stop();
 
-				stopwatch.Stop();
+                return new Response
+                {
+                    Success = true,
+                    StatusCode = (int)HttpStatusCode.OK,
+                    FreelancerData = freelancerDataResponse,
+                    ApiLogData = apiLogs,
+                    ErrorLogsData = errorLogs
+                };
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _logger.Error("Failed to update the DB:", ex.Message);
 
-				return new Response
-				{
-					Success = true,
-					StatusCode = (int)HttpStatusCode.OK,
-					FreelancerData = freelancerDataResponse,
-					ApiLogData = apiLogs,
-					ErrorLogsData = errorLogs
-				};
-			}
-			catch (Exception ex)
-			{
-				stopwatch.Stop();
-				_logger.Error("Failed to update the DB:", ex.Message);
-				throw new Exception(ex.Message);
-			}
-		}
-		else
-		{
-			_logger.Error("Failed to ExecuteParallelApiCallsAsync");
+                throw new Exception(ex.Message);
+            }
+        }
+        else
+        {
+            _logger.Error("Failed to ExecuteParallelApiCallsAsync");
 
 			stopwatch.Stop();
 
-			return new Response
-			{
-				Success = false,
-				StatusCode = (int)HttpStatusCode.BadRequest,
-				Message = "There is no any API get successed",
-				Errors = apiLogs.Message
-			};
-		}
-	}
+            throw new Exception("There is no any API call succeed");
+        }
+    }
 
 	protected virtual async Task<(bool, ApiLog, FreelancerData, ErrorLogs)> ExecuteParallelApiCallsAsync(FreelancerDto freelancerDto)
 	{
