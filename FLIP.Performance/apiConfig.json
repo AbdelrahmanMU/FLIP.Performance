@@ -1,29 +1,13 @@
 ﻿[
-    //{
-    //    "platformName": "BAHR",
-    //    "url": "https://api.bahr.sa/api/v1/users/",
-    //    "isBearerAuth": true,
-    //    "bearerToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiYWhyLnNhIiwiaWF0IjoxNzQxMzQ5MTc0LjM5NjM4NSwiZXhwIjoxNzU3MjQ2Nzc0LjM5NDcwNSwibmJmIjoxNzQxMzQ5MTc0LjM5NjM4NSwic3ViIjoiYmFoci10ZWFtIiwiYXVkIjoidXNlci1pbmZvIn0.322i9GoUASF_EOM0Q8sb3Jd3LaOqiqUpVwG2yodzmpE",
-    //    "isRide": false,
-    //    "params": [
-    //        "2023-01-10",
-    //        "2024-12-12"
-    //    ]
-    //},
     {
-        "platformName": "Uber",
-        "url": "https://jsonplaceholder.typicode.com/posts/",
-        "isBearerAuth": false,
-        "bearerToken": "",
-        "isRide": true,
-        "params": []
-    },
-    {
-        "platformName": "Tawseel",
-        "url": "https://jsonplaceholder.typicode.com/posts/",
-        "isBearerAuth": false,
-        "bearerToken": "",
-        "isRide": true,
-        "params": []
+        "platformName": "BAHR",
+        "url": "https://api.bahr.sa/api/v1/users/",
+        "isBearerAuth": true,
+        "bearerToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiYWhyLnNhIiwiaWF0IjoxNzQxMzQ5MTc0LjM5NjM4NSwiZXhwIjoxNzU3MjQ2Nzc0LjM5NDcwNSwibmJmIjoxNzQxMzQ5MTc0LjM5NjM4NSwic3ViIjoiYmFoci10ZWFtIiwiYXVkIjoidXNlci1pbmZvIn0.322i9GoUASF_EOM0Q8sb3Jd3LaOqiqUpVwG2yodzmpE",
+        "isRide": false,
+        "params": [
+            "2023-01-10",
+            "2024-12-12"
+        ]
     }
 ]

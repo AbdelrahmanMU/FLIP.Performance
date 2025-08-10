@@ -10,8 +10,6 @@ public class ProcessIdCommandHandler(INotifyMessages notifyMessages) : IRequestH
 
     public async Task<Response> Handle(ProcessIdCommand request, CancellationToken cancellationToken)
     {
-        await _notifyMessages.NotifyFLIPRealTimeAsync(request.Id);
-        
-        return new Response();
+        return await _notifyMessages.NotifyFLIPQeueuAsync(request.Id, request.IsUpdating);
     }
 }

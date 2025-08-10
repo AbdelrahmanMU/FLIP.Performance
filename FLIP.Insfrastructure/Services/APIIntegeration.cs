@@ -2,7 +2,6 @@
 using FLIP.Application.Helpers;
 using FLIP.Application.Interfaces;
 using FLIP.Application.Models;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Polly;
 using Polly.Timeout;
@@ -14,41 +13,30 @@ using System.Net.Http.Headers;
 namespace FLIP.Infrastructure.Services;
 
 public class APIIntegeration(IConfiguration configuration,
-	IDapperQueries dapperQueries,
-	IMemoryCache memoryCache) : IAPIIntegeration
+	IDapperQueries dapperQueries) : IAPIIntegeration
 {
 	private readonly HttpClient _httpClient = new();
 	private readonly int _maxDegreeOfParallelism = 16;
 	private readonly ILogger _logger = Log.Logger;
 	private ApiLog _log = new();
-	private ErrorLogs _errorLog = new();
-	private FreelancerData _freelancersData = new();
+	private ErrorLogs? _errorLog;
+	private FreelancerData? _freelancersData;
 	private readonly IConfiguration _configuration = configuration;
 	private readonly IDapperQueries _dapperQueries = dapperQueries;
-	private readonly IMemoryCache _memoryCache = memoryCache;
 
 	public async Task<Response> ProcessId(FreelancerDto freelancer)
 	{
 		var stopwatch = Stopwatch.StartNew();
 
-		//if (_memoryCache.TryGetValue(freelancer.Id, out _))
-		//{
-		//    // ID is already cached
-		//    return new Response
-		//    {
-		//        Success = true,
-		//        StatusCode = (int)HttpStatusCode.OK,
-		//    };
-		//}
-
-		//// ID is not cached, so we add it
-		//_memoryCache.Set(freelancer.Id, true);
-
         // At least one success
         var (success, apiLogs, freelancerDataResponse, errorLogs) = await ExecuteParallelApiCallsAsync(freelancer);
 
         await _dapperQueries.InsertLogs(apiLogs);
-        await _dapperQueries.InsertErrorLogs(errorLogs);
+		
+		if(errorLogs is not null)
+		{
+            await _dapperQueries.InsertErrorLogs(errorLogs);
+        }
 
         if (success)
         {
@@ -66,9 +54,9 @@ public class APIIntegeration(IConfiguration configuration,
                     };
                 }
 
-				var rides = freelancerDataResponse.IsRide ? freelancerDataResponse : null;
+				var rides =  freelancerDataResponse is not null && freelancerDataResponse.IsRide ? freelancerDataResponse : null;
 
-				var projects = !freelancerDataResponse.IsRide ? freelancerDataResponse : null;
+				var projects = freelancerDataResponse is not null && !freelancerDataResponse.IsRide ? freelancerDataResponse : null;
 
 				if (rides is not null)
 				{
@@ -81,7 +69,7 @@ public class APIIntegeration(IConfiguration configuration,
 				}
 
                 stopwatch.Stop();
-
+					
                 return new Response
                 {
                     Success = true,
@@ -109,7 +97,7 @@ public class APIIntegeration(IConfiguration configuration,
         }
     }
 
-	protected virtual async Task<(bool, ApiLog, FreelancerData, ErrorLogs)> ExecuteParallelApiCallsAsync(FreelancerDto freelancerDto)
+	protected virtual async Task<(bool, ApiLog, FreelancerData?, ErrorLogs?)> ExecuteParallelApiCallsAsync(FreelancerDto freelancerDto)
 	{
 		var tasks = new List<Task<bool>>();
 
@@ -224,6 +212,7 @@ public class APIIntegeration(IConfiguration configuration,
 
 			var errorLog = new ErrorLogs
 			{
+				Component = "API Integration",
 				RequestUrl = api.Url,
 				RequestPayload = id.ToString(),
 				ErrorMessage = ex.Message,

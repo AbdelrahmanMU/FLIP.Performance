@@ -1,4 +1,6 @@
-﻿namespace FLIP.Application.Models;
+﻿using System.Text.Json.Serialization;
+
+namespace FLIP.Application.Models;
 
 public class Response
 {
@@ -8,7 +10,15 @@ public class Response
     public DateTime Timestamp { get; set; } = DateTime.Now;
     public string? Errors { get; set; }
 
-    public FreelancerData FreelancerData { get; set; } = new();
-    public ApiLog ApiLogData { get; set; } = new();
-    public ErrorLogs ErrorLogsData { get; set; } = new();
+    [JsonIgnore] public FreelancerData FreelancerData { get; set; } = new();
+    [JsonIgnore] public ApiLog ApiLogData { get; set; } = new();
+    [JsonIgnore] public ErrorLogs ErrorLogsData { get; set; } = new();
+
+    public List<PlatformMeta> PlatformsMeta { get; set; } = [];
+}
+
+public class PlatformMeta
+{
+    public string PlatformName { get; set; } = default!;
+    public bool IsSuccessfullyPublished { get; set; }
 }
