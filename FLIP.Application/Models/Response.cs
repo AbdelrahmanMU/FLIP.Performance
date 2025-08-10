@@ -10,9 +10,9 @@ public class Response
     public DateTime Timestamp { get; set; } = DateTime.Now;
     public string? Errors { get; set; }
 
-    [JsonIgnore] public FreelancerData FreelancerData { get; set; } = new();
+    [JsonIgnore] public FreelancerData? FreelancerData { get; set; } = new();
     [JsonIgnore] public ApiLog ApiLogData { get; set; } = new();
-    [JsonIgnore] public ErrorLogs ErrorLogsData { get; set; } = new();
+    [JsonIgnore] public ErrorLogs? ErrorLogsData { get; set; } = new();
 
     public List<PlatformMeta> PlatformsMeta { get; set; } = [];
 }

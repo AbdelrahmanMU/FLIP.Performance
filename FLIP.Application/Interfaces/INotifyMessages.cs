@@ -4,5 +4,6 @@ namespace FLIP.Application.Interfaces;
 
 public interface INotifyMessages
 {
-    Task<Response> NotifyFLIPQeueuAsync(string freelancerID, bool isUpdate);
+    Task<Response> NotifyFLIPRealTimeQeueuAsync(string freelancerID);
+    Task<Response> NotifyDailyJobQeueuAsync(string freelancerID);
 }

@@ -6,5 +6,4 @@ namespace FLIP.Application.Commands.ProcessId;
 public class ProcessIdCommand : IRequest<Response>
 {
     public string Id { get; set; } = default!;
-    public bool IsUpdating { get; set; }
 }

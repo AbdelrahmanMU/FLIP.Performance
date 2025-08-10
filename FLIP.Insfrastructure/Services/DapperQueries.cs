@@ -13,8 +13,10 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
     #region Insert
 
-    public async Task<int> InsertFreelancers(FreelancerData freelancersData)
+    public async Task<int> InsertFreelancers(FreelancerData? freelancersData)
     {
+        ArgumentNullException.ThrowIfNull(freelancersData);
+
         using IDbConnection db = new SqlConnection(connectionString);
 
         string sql = @"
@@ -28,8 +30,10 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> InsertFreelancerRide(FreelancerData freelancersData)
+    public async Task<int> InsertFreelancerRide(FreelancerData? freelancersData)
     {
+        ArgumentNullException.ThrowIfNull(freelancersData);
+
         using IDbConnection db = new SqlConnection(connectionString);
 
         string sql = @"
@@ -54,15 +58,17 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> InsertErrorLogs(ErrorLogs apiLogs)
+    public async Task<int> InsertErrorLogs(ErrorLogs? errorLogs)
     {
+        ArgumentNullException.ThrowIfNull(errorLogs);
+
         using IDbConnection db = new SqlConnection(connectionString);
 
         string sql = @"
                 INSERT INTO ErrorLogs (RequestUrl, RequestPayload, ErrorMessage, LoggedAt) 
                 VALUES (@RequestUrl, @RequestPayload, @ErrorMessage, @LoggedAt);";
 
-        var affectedRows = await db.ExecuteAsync(sql, apiLogs);
+        var affectedRows = await db.ExecuteAsync(sql, errorLogs);
 
         return affectedRows;
     }
@@ -71,8 +77,10 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
     #region Update
 
-    public async Task<int> UpdateFreelancers(FreelancerData freelancersData)
+    public async Task<int> UpdateFreelancers(FreelancerData? freelancersData)
     {
+        ArgumentNullException.ThrowIfNull(freelancersData);
+
         using IDbConnection db = new SqlConnection(connectionString);
 
         string sql = @"
@@ -88,8 +96,10 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
         return affectedRows;
     }
 
-    public async Task<int> UpdateFreelancersRide(FreelancerData freelancersData)
+    public async Task<int> UpdateFreelancersRide(FreelancerData? freelancersData)
     {
+        ArgumentNullException.ThrowIfNull(freelancersData);
+
         using IDbConnection db = new SqlConnection(connectionString);
 
         string sql = @"

@@ -1,6 +1,6 @@
-﻿using FLIP.Application.Commands.ProcessId;
+﻿using FLIP.Application.Commands.DailyJob;
+using FLIP.Application.Commands.ProcessId;
 using FLIP.Application.Interfaces;
-using FLIP.Application.Models;
 using Hangfire;
 using MediatR;
 using Serilog;
@@ -31,15 +31,26 @@ public class RecallingApis(IDapperQueries dapperQueries,
 
         foreach (var id in distinctIds)
         {
-            var processIdResult = await _mediator.Send(new ProcessIdCommand { Id = id, IsUpdating = true });
+            var processIdResult = await _mediator.Send(new DailyJobCommand { FreelancerId = id});
+
+            await _dapperQueries.InsertLogs(processIdResult.ApiLogData);
+            await _dapperQueries.InsertErrorLogs(processIdResult.ErrorLogsData);
 
             if (processIdResult.Success)
             {
                 try
                 {
-                    var rides = processIdResult.FreelancerData.IsRide ? processIdResult.FreelancerData : new FreelancerData() ;
+                    var rides = processIdResult is not null 
+                        && processIdResult.FreelancerData is not null 
+                        && processIdResult.FreelancerData.IsRide 
+                        ? processIdResult.FreelancerData 
+                        : null ;
 
-                    var projects = processIdResult.FreelancerData.IsRide ? processIdResult.FreelancerData : new FreelancerData();
+                    var projects = processIdResult is not null 
+                        && processIdResult.FreelancerData is not null &&
+                        processIdResult.FreelancerData.IsRide 
+                        ? processIdResult.FreelancerData 
+                        : null;
 
                     if (rides is not null)
                     {
@@ -50,9 +61,6 @@ public class RecallingApis(IDapperQueries dapperQueries,
                     {
                         await _dapperQueries.UpdateFreelancers(projects);
                     }
-
-                    await _dapperQueries.InsertLogs(processIdResult.ApiLogData);
-                    await _dapperQueries.InsertErrorLogs(processIdResult.ErrorLogsData);
                 }
                 catch (Exception ex)
                 {
