@@ -163,9 +163,9 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
                     WHERE NationalId = @NationalId
                     ORDER BY IngestedAt DESC;";
 
-        var result = (await db.QueryAsync<GetFreelancerDto>(sql, new { NationalId = "1234567890" })).ToList();
+        var result = (await db.QueryAsync<GetFreelancerDto>(sql, new { NationalId = freelancerId })).ToList();
 
-
+        return result;
     }
 
     #endregion

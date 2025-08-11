@@ -6,7 +6,7 @@ public class DailyJobCommandValidator : AbstractValidator<DailyJobCommand>
 {
     public DailyJobCommandValidator()
     {
-        RuleFor(x => x.FreelancerId)
+        RuleFor(x => x.Freelancers)
             .NotNull()
             .NotEmpty();
     }
