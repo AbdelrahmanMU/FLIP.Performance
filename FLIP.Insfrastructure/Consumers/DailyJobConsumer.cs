@@ -41,7 +41,7 @@ public class DailyJobConsumer(IAPIIntegeration iAPIIntegeration,
 
                 var projects = partenerResponse is not null
                     && partenerResponse.FreelancerData is not null &&
-                    partenerResponse.FreelancerData.IsRide
+                    !partenerResponse.FreelancerData.IsRide
                     ? partenerResponse.FreelancerData
                     : null;
 
