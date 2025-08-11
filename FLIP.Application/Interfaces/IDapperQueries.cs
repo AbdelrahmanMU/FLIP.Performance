@@ -1,4 +1,5 @@
 ﻿using FLIP.Application.Models;
+using FLIP.Application.Queries.GetFreelancerData;
 
 namespace FLIP.Application.Interfaces;
 
@@ -8,8 +9,11 @@ public interface IDapperQueries
     Task<int> InsertFreelancerRide(FreelancerData? freelancersData);
     Task<int> InsertLogs(ApiLog apiLogs);
     Task<int> InsertErrorLogs(ErrorLogs? apiLogs);
-    Task<List<string>> GetFreelancersIds();
+    Task<List<FreelancerDailyJobDto>> GetFreelancersProjectsUpdateInfo();
+    Task<List<FreelancerDailyJobDto>> GetFreelancersRidesUpdateInfo();
 
-    Task<int> UpdateFreelancers(FreelancerData? freelancersData);
+    Task<int> UpdateFreelancersProjects(FreelancerData? freelancersData);
     Task<int> UpdateFreelancersRide(FreelancerData? freelancersData);
+
+    Task<List<GetFreelancerDto>> GetFreelancerData(string freelancerId);
 }

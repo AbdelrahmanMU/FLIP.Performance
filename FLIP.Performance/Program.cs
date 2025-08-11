@@ -1,10 +1,13 @@
 using FLIP.API.BackgroundJobs;
+using FLIP.API.Behaviors;
+using FLIP.API.Middlewares;
 using FLIP.Application;
 using FLIP.Application.Config;
 using FLIP.Infrastructure;
 using FLIP.Infrastructure.Consumers;
 using Hangfire;
 using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -15,6 +18,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Register Serilog as the default logger
 Log.Information("Application Starting...");
+
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -130,28 +135,13 @@ Log.Logger = new LoggerConfiguration()
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionMiddleware>();
+
 using (var scope = app.Services.CreateScope())
 {
     var recallingApis = scope.ServiceProvider.GetRequiredService<RecallingApis>();
     recallingApis.SchedulingTheJob();
 }
-
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next(); // Continue processing
-    }
-    catch (Exception ex)
-    {
-        Log.Error(ex, "Unhandled exception occurred!");
-
-        // Respond with a generic error message
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync("An unexpected error occurred.");
-    }
-});
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

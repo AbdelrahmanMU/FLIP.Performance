@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using FLIP.Application.Interfaces;
 using FLIP.Application.Models;
+using FLIP.Application.Queries.GetFreelancerData;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
@@ -77,19 +78,20 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
     #region Update
 
-    public async Task<int> UpdateFreelancers(FreelancerData? freelancersData)
+    public async Task<int> UpdateFreelancersProjects(FreelancerData? freelancersData)
     {
         ArgumentNullException.ThrowIfNull(freelancersData);
 
         using IDbConnection db = new SqlConnection(connectionString);
 
-        string sql = @"
+        const string sql = @"
         UPDATE StagingTableProject
         SET 
             PlatformName = @PlatformName,
-            IngestedAt = @IngestedAt,
-            JsonContent = @JsonContent
-        WHERE NationalId = @NationalId;";
+            IngestedAt   = @IngestedAt,
+            JsonContent  = @JsonContent,
+            NationalId   = @NationalId
+        WHERE TransactionID = @TransactionID;";
 
         var affectedRows = await db.ExecuteAsync(sql, freelancersData);
 
@@ -102,13 +104,14 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
         using IDbConnection db = new SqlConnection(connectionString);
 
-        string sql = @"
+        const string sql = @"
         UPDATE StagingTableRide
         SET 
             PlatformName = @PlatformName,
-            IngestedAt = @IngestedAt,
-            JsonContent = @JsonContent
-        WHERE NationalId = @NationalId;";
+            IngestedAt   = @IngestedAt,
+            JsonContent  = @JsonContent,
+            NationalId   = @NationalId
+        WHERE TransactionID = @TransactionID;";
 
         var affectedRows = await db.ExecuteAsync(sql, freelancersData);
 
@@ -119,19 +122,51 @@ public class DapperQueries(IConfiguration configuration) : IDapperQueries
 
     #region Get
 
-    public async Task<List<string>> GetFreelancersIds()
+    public async Task<List<FreelancerDailyJobDto>> GetFreelancersProjectsUpdateInfo()
     {
         using IDbConnection db = new SqlConnection(connectionString);
 
         string selectSql = @"
-        SELECT NationalId 
+        SELECT NationalId, TransactionID 
         FROM StagingTableProject";
 
-        var result = await db.QueryAsync<string>(selectSql);
+        var result = await db.QueryAsync<FreelancerDailyJobDto>(selectSql);
 
-        return result.ToList();
+        return [.. result];
     }
 
+    public async Task<List<FreelancerDailyJobDto>> GetFreelancersRidesUpdateInfo()
+    {
+        using IDbConnection db = new SqlConnection(connectionString);
+
+        string selectSql = @"
+        SELECT NationalId, TransactionID
+        FROM StagingTableRide";
+
+        var result = await db.QueryAsync<FreelancerDailyJobDto>(selectSql);
+
+        return [.. result];
+    }
+
+    public async Task<List<GetFreelancerDto>> GetFreelancerData(string freelancerId)
+    {
+        using IDbConnection db = new SqlConnection(connectionString);
+
+        var sql = @"SELECT ID, TransactionID, JsonContent, IngestedAt, NationalId, PlatformName, 'Project' AS Source
+                    FROM [FLIPMiddleware].[dbo].[StagingTableProject]
+                    WHERE NationalId = @NationalId
+
+                    UNION ALL
+
+                    SELECT ID, TransactionID, JsonContent, IngestedAt, NationalId, PlatformName, 'Ride' AS Source
+                    FROM [FLIPMiddleware].[dbo].[StagingTableRide]
+                    WHERE NationalId = @NationalId
+                    ORDER BY IngestedAt DESC;";
+
+        var result = (await db.QueryAsync<GetFreelancerDto>(sql, new { NationalId = "1234567890" })).ToList();
+
+
+    }
 
     #endregion
 

@@ -1,5 +1,13 @@
-﻿namespace FLIP.Application.Commands.DailyJob;
+﻿using FluentValidation;
 
-public class DailyJobCommandValidator
+namespace FLIP.Application.Commands.DailyJob;
+
+public class DailyJobCommandValidator : AbstractValidator<DailyJobCommand>
 {
+    public DailyJobCommandValidator()
+    {
+        RuleFor(x => x.FreelancerId)
+            .NotNull()
+            .NotEmpty();
+    }
 }

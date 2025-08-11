@@ -13,7 +13,7 @@ public class NotifyMessages(IPublishEndpoint publish) : INotifyMessages
     private readonly ILogger _logger = Log.Logger;
     private readonly IPublishEndpoint _publish = publish;
 
-    public async Task<Application.Models.Response> NotifyFLIPRealTimeQeueuAsync(string freelancerId)
+    public async Task<ResponseVM<List<PlatformMeta>>> NotifyFLIPRealTimeQeueuAsync(string freelancerId)
     {
         var apis = APIHelper.APIRequests();
         var platformsMeta = new List<PlatformMeta>();
@@ -34,11 +34,11 @@ public class NotifyMessages(IPublishEndpoint publish) : INotifyMessages
                 _logger.Information($"[Publisher] Sent: {freelancerId}");
             }
 
-            var response = new Application.Models.Response
+            var response = new ResponseVM<List<PlatformMeta>>
             {
-                Success = true,
-                StatusCode = (int)HttpStatusCode.OK,
-                PlatformsMeta = platformsMeta
+                Status = "success",
+                Error = null,
+                Data = platformsMeta
             };
 
             return response;
@@ -52,7 +52,7 @@ public class NotifyMessages(IPublishEndpoint publish) : INotifyMessages
         }
     }
 
-    public async Task<Application.Models.Response> NotifyDailyJobQeueuAsync(string freelancerId)
+    public async Task<Application.Models.Response> NotifyDailyJobQeueuAsync(List<FreelancerDailyJobDto> freelancersDto)
     {
         var apis = APIHelper.APIRequests();
         var platformsMeta = new List<PlatformMeta>();
@@ -63,14 +63,19 @@ public class NotifyMessages(IPublishEndpoint publish) : INotifyMessages
 
             foreach (var api in apis)
             {
-                dailyJobMessage.FreelancerId = freelancerId;
-                dailyJobMessage.PlatformName = api.PlatformName;
+                foreach (var freelancer in freelancersDto)
+                {
+                    dailyJobMessage.FreelancerId = freelancer.NationalId;
+                    dailyJobMessage.PlatformName = api.PlatformName;
+                    dailyJobMessage.TransactionID = freelancer.TransactionID;
 
-                await _publish.Publish(dailyJobMessage);
+                    await _publish.Publish(dailyJobMessage);
 
-                platformsMeta.Add(new PlatformMeta { PlatformName = api.PlatformName, IsSuccessfullyPublished = true });
+                    platformsMeta.Add(new PlatformMeta { PlatformName = api.PlatformName, IsSuccessfullyPublished = true });
 
-                _logger.Information($"[Publisher] Sent: {freelancerId}");
+                    _logger.Information($"[Publisher] Sent: {freelancer.NationalId}");
+                }
+
             }
 
             var response = new Application.Models.Response

@@ -115,7 +115,7 @@ public class APIIntegeration(IConfiguration configuration,
 			{
 				try
 				{
-					return await CallExternalApiAsync(freelancerDto.Api, freelancerDto.Id);
+					return await CallExternalApiAsync(freelancerDto);
 				}
 				finally
 				{
@@ -138,7 +138,7 @@ public class APIIntegeration(IConfiguration configuration,
 		return (successCount >= 1, _log, _freelancersData, _errorLog);
 	}
 
-	private async Task<bool> CallExternalApiAsync(ApiRequest api, string id)
+	private async Task<bool> CallExternalApiAsync(FreelancerDto freelancerDto)
 	{
 		var retryCount = int.Parse(_configuration["retryCount"] ?? "");
 		var maxResponseTime = int.Parse(_configuration["maxResponseTime"] ?? "");
@@ -159,15 +159,15 @@ public class APIIntegeration(IConfiguration configuration,
 
 		try
 		{
-			if (api.IsBearerAuth)
+			if (freelancerDto.Api.IsBearerAuth)
 			{
-				_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", api.BearerToken);
+				_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", freelancerDto.Api.BearerToken);
 			}
 
 			response = await policy.ExecuteAsync(async (ct) =>
 			{
 				// Perform the HTTP GET request with the cancellation token
-				return await _httpClient.GetAsync($"{api.Url}", ct);
+				return await _httpClient.GetAsync($"{freelancerDto.Api.Url}", ct);
 			}, cancellationToken);
 
 			stopwatch.Stop();
@@ -175,7 +175,7 @@ public class APIIntegeration(IConfiguration configuration,
 
 			log = new ApiLog
 			{
-				RequestUri = api.Url,
+				RequestUri = freelancerDto.Api.Url,
 				StatusCode = (int)response.StatusCode,
 				LoggedAt = DateTime.Now,
 				Message = response.ReasonPhrase,
@@ -186,12 +186,12 @@ public class APIIntegeration(IConfiguration configuration,
 			{
 				freelancerData = new FreelancerData
 				{
-					TransactionID = Guid.NewGuid(),
-					PlatformName = api.PlatformName,
+					TransactionID = freelancerDto.IsUpdating ? freelancerDto.TransactionID : Guid.NewGuid(),
+					PlatformName = freelancerDto.Api.PlatformName,
 					IngestedAt = DateTime.Now.AddDays(-1),
-					NationalId = id,
+					NationalId = freelancerDto.Id,
 					JsonContent = await response.Content.ReadAsStringAsync(),
-					IsRide = api.IsRide
+					IsRide = freelancerDto.Api.IsRide
 				};
 
 				_freelancersData = freelancerData;
@@ -207,14 +207,14 @@ public class APIIntegeration(IConfiguration configuration,
 			_logger.Error($"[API Caller] API call failed after {retryCount} retries", ex.Message);
 
 			log.Message = ex.Message;
-			log.RequestUri = api.Url;
+			log.RequestUri = freelancerDto.Api.Url;
 			log.StatusCode = (int)response.StatusCode;
 
 			var errorLog = new ErrorLogs
 			{
 				Component = "API Integration",
-				RequestUrl = api.Url,
-				RequestPayload = id.ToString(),
+				RequestUrl = freelancerDto.Api.Url,
+				RequestPayload = freelancerDto.Id,
 				ErrorMessage = ex.Message,
 				LoggedAt = DateTime.UtcNow
 			};

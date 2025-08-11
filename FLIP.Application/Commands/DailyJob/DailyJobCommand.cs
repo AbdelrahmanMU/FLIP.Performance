@@ -3,7 +3,8 @@ using MediatR;
 
 namespace FLIP.Application.Commands.DailyJob;
 
-public class DailyJobCommand : IRequest<Response>
+public class DailyJobCommand : IRequest<Unit>
 {
-    public string FreelancerId { get; set; } = default!;
+    public List<FreelancerDailyJobDto> Freelancers { get; set; } = [];
 }
+

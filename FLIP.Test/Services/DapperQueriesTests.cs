@@ -143,7 +143,7 @@
 //            };
 
 //        // Act
-//        var result = await _dapperQueries.UpdateFreelancers(freelancersData);
+//        var result = await _dapperQueries.UpdateFreelancersProjects(freelancersData);
 
 //        // Assert
 //        Assert.Equal(1, result); // Verify that 1 row was affected
@@ -182,7 +182,7 @@
 //        var expectedIds = new List<string> { "1115604133", "12345" };
 
 //        // Act
-//        var result = await _dapperQueries.GetFreelancersIds();
+//        var result = await _dapperQueries.GetFreelancersProjectsUpdateInfo();
 
 //        // Assert
 //        Assert.True(expectedIds.OrderBy(id => id).SequenceEqual(result.OrderBy(id => id)),

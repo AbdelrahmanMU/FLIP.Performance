@@ -7,4 +7,5 @@ public class FreelancerDto
     public string Id { get; set; } = default!;
     public ApiRequest Api { get; set; } = new();
     public bool IsUpdating { get; set; }
+    public Guid TransactionID { get; set; }
 }
